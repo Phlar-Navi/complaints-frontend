@@ -41,10 +41,11 @@ import BasicLayout from "layouts/authentication/components/BasicLayout";
 // Images
 import bgImage from "assets/images/bg-sign-in-basic.jpeg";
 
-import { login } from "api/authService";
-import { centralLogin } from "api/centralAuthService";
+import { login, login_legacy } from "api/authService";
+import { smartLogin } from "api/smartLoginService";
 
 import { useNavigate } from "react-router-dom";
+import { useEffect } from "react";
 
 function Basic() {
   const [rememberMe, setRememberMe] = useState(false);
@@ -52,28 +53,46 @@ function Basic() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [tenantSchema, setTenantSchema] = useState("");
 
   const navigate = useNavigate();
 
   const handleSetRememberMe = () => setRememberMe(!rememberMe);
+
+  // Détection automatique du tenant depuis l'URL
+  useEffect(() => {
+    const hostname = window.location.hostname;
+    if (hostname.includes(".")) {
+      // Extraction du sous-domaine tenant
+      const possibleTenant = hostname.split(".")[0];
+      if (possibleTenant !== "www" && possibleTenant !== "localhost:8000") {
+        setTenantSchema(possibleTenant);
+      }
+    }
+  }, []);
 
   const handleLogin = async () => {
     setLoading(true);
     setError("");
 
     try {
-      const result = await login(email, password, tenantSchema);
-      console.log("Login réussi:", result);
+      //const userData = await login(email, password);
+      const userData = await login_legacy(email, password);
+      console.log("Utilisateur connecté :", userData);
 
-      if (result.redirect_url) {
-        // Rediriger vers le domaine du tenant avec les tokens en sessionStorage
-        window.location.href = `${result.redirect_url}/auth/callback`;
+      // Si redirection automatique n'a pas eu lieu (même tenant)
+      if (userData.user.role === "SUPER_ADMIN") {
+        navigate("/admin/dashboard");
       } else {
-        setError("Aucun tenant associé à cet utilisateur");
+        navigate("/dashboard");
       }
     } catch (err) {
-      console.error("Erreur login:", err);
-      setError(typeof err === "string" ? err : "Email ou mot de passe incorrect");
+      console.error("Erreur login :", err);
+      if (err.response?.data?.detail) {
+        setError(err.response.data.detail);
+      } else {
+        setError("Email ou mot de passe incorrect");
+      }
     } finally {
       setLoading(false);
     }
