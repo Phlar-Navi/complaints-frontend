@@ -41,7 +41,7 @@ import BasicLayout from "layouts/authentication/components/BasicLayout";
 // Images
 import bgImage from "assets/images/bg-sign-in-basic.jpeg";
 
-import { login, login_legacy } from "api/authService";
+import { login } from "api/authService";
 import { smartLogin } from "api/smartLoginService";
 
 import { useNavigate } from "react-router-dom";
@@ -77,7 +77,7 @@ function Basic() {
 
     try {
       //const userData = await login(email, password);
-      const userData = await login_legacy(email, password);
+      const userData = await login(email, password);
       console.log("Utilisateur connecté :", userData);
 
       // Si redirection automatique n'a pas eu lieu (même tenant)

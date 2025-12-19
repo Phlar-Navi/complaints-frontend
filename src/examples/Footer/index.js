@@ -42,8 +42,10 @@ function Footer({ company, links }) {
       </MDBox>
     ));
 
-  return (
-    <MDBox
+  return;
+  {
+    /* 
+      <MDBox
       width="100%"
       display="flex"
       flexDirection={{ xs: "column", lg: "row" }}
@@ -94,7 +96,8 @@ function Footer({ company, links }) {
         {renderLinks()}
       </MDBox>
     </MDBox>
-  );
+    */
+  }
 }
 
 // Setting default values for the props of Footer

@@ -1,70 +1,111 @@
-// endpoints.js
+// src/api/endpoints.js
+
+import { config } from "./config";
+import { normalizeHostname, getNormalizedHostname } from "../utils/hostname";
 
 /**
- * Retourne le port du backend selon l'environnement
- * En dev: frontend sur :3000, backend sur :8000
- * En prod: même port pour tout
+ * Retourne l'URL complète du backend pour un domaine donné
+ * NORMALISE automatiquement les underscores en tirets
+ *
+ * @param {string} hostname - Le hostname (avec ou sans sous-domaine)
+ * @returns {string} URL complète du backend
  */
-const getBackendPort = () => {
-  // En développement, forcer le port 8000 pour le backend
-  if (process.env.NODE_ENV === "development" || window.location.port === "3000") {
-    return ":8000";
-  }
-  // En production, utiliser le port actuel
-  return window.location.port ? `:${window.location.port}` : "";
+export const getBackendUrl = (hostname) => {
+  const protocol = window.location.protocol; // http: ou https:
+  const backendPort = config.IS_DEVELOPMENT ? ":8000" : ""; // Port 8000 en dev
+
+  // 🔧 CORRECTION: Normaliser le hostname (remplacer _ par -)
+  const normalizedHostname = normalizeHostname(hostname);
+
+  return `${protocol}//${normalizedHostname}${backendPort}/api`;
 };
 
 /**
  * Retourne le domaine racine public (sans sous-domaine tenant)
- * Exemples:
- * - hopital-central.localhost:3000 → localhost:8000 (dev)
- * - tenant1.example.com → example.com (prod)
- * - localhost:3000 → localhost:8000 (dev)
  */
-const getPublicDomain = () => {
+const getPublicBackendUrl = () => {
   const hostname = window.location.hostname;
-  const port = getBackendPort();
-  const protocol = window.location.protocol;
 
   // Si le hostname contient un point (sous-domaine)
   if (hostname.includes(".")) {
     const parts = hostname.split(".");
 
     // Pour localhost avec sous-domaine: tenant.localhost → localhost
-    if (parts[parts.length - 1] === "localhost" || parts.length === 2) {
-      return `${protocol}//${parts[parts.length - 1]}${port}`;
+    if (parts[parts.length - 1] === "localhost") {
+      return getBackendUrl("localhost");
     }
 
     // Pour domaines normaux: tenant.example.com → example.com
     const baseDomain = parts.slice(-2).join(".");
-    return `${protocol}//${baseDomain}${port}`;
+    return getBackendUrl(baseDomain);
   }
 
   // Pas de sous-domaine, on est déjà sur le domaine public
-  return `${protocol}//${hostname}${port}`;
+  return getBackendUrl(hostname);
 };
 
-// URL de l'API publique (pour login et création de tenant)
-const PUBLIC_API_URL = `${getPublicDomain()}/api`;
+/**
+ * Retourne l'URL du backend pour le tenant actuel
+ * 🔧 UTILISE le hostname normalisé
+ */
+const getTenantBackendUrl = () => {
+  // Utiliser le hostname normalisé au lieu du hostname brut
+  const normalizedHostname = getNormalizedHostname();
+  return getBackendUrl(normalizedHostname);
+};
 
-// URL de l'API tenant-spécifique (pour toutes les autres requêtes)
-const TENANT_API_URL = `${window.location.origin}/api`;
+// URLs de base
+const PUBLIC_API_URL = getPublicBackendUrl();
+const TENANT_API_URL = getTenantBackendUrl();
+
+// Log pour debug (à retirer en production)
+if (config.IS_DEVELOPMENT) {
+  console.log("🔧 API Configuration:");
+  console.log("  Frontend URL:", window.location.origin);
+  console.log("  Hostname (brut):", window.location.hostname);
+  console.log("  Hostname (normalisé):", getNormalizedHostname());
+  console.log("  Public API URL:", PUBLIC_API_URL);
+  console.log("  Tenant API URL:", TENANT_API_URL);
+}
 
 export const ENDPOINTS = {
   // === ENDPOINTS PUBLICS (pas de tenant requis) ===
-  // Utilisent PUBLIC_API_URL pour pointer vers localhost:8000
   LOGIN: `${PUBLIC_API_URL}/auth/login/`,
+  SMART_LOGIN: `${PUBLIC_API_URL}/auth/smart-login/`,
   REFRESH: `${PUBLIC_API_URL}/auth/token/refresh/`,
   TENANT_CREATE: `${PUBLIC_API_URL}/tenants/create/`,
 
   // === ENDPOINTS TENANT-SPÉCIFIQUES ===
-  // Utilisent TENANT_API_URL (domaine actuel avec sous-domaine)
   LOGOUT: `${TENANT_API_URL}/auth/logout/`,
   ME: `${TENANT_API_URL}/auth/me/`,
   CHANGE_PASSWORD: `${TENANT_API_URL}/auth/change-password/`,
+
+  // Users
   USERS: `${TENANT_API_URL}/users/`,
   USER_CREATE: `${TENANT_API_URL}/users/create/`,
   USER_DETAIL: (id) => `${TENANT_API_URL}/users/${id}/`,
+
+  // Complaints
+  COMPLAINTS: `${TENANT_API_URL}/complaints/`,
+  COMPLAINT_DETAIL: (id) => `${TENANT_API_URL}/complaints/${id}/`,
+  COMPLAINT_ASSIGN: (id) => `${TENANT_API_URL}/complaints/${id}/assign/`,
+  COMPLAINT_COMMENT: (id) => `${TENANT_API_URL}/complaints/${id}/add_comment/`,
+  COMPLAINT_ATTACHMENT: (id) => `${TENANT_API_URL}/complaints/${id}/add_attachment/`,
+  COMPLAINT_HISTORY: (id) => `${TENANT_API_URL}/complaints/${id}/history/`,
+
+  // Dashboard
+  DASHBOARD: `${TENANT_API_URL}/dashboard/`,
+
+  // SLA Configs
+  SLA_CONFIGS: `${TENANT_API_URL}/sla-configs/`,
+  SLA_CONFIG_DETAIL: (id) => `${TENANT_API_URL}/sla-configs/${id}/`,
+
+  // History
+  HISTORY: `${TENANT_API_URL}/history/`,
+  HISTORY_DETAIL: (id) => `${TENANT_API_URL}/history/${id}/`,
 };
 
-export default PUBLIC_API_URL;
+// Export des URLs pour usage direct
+export { PUBLIC_API_URL, TENANT_API_URL };
+
+export default TENANT_API_URL;

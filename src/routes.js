@@ -44,6 +44,11 @@ import Notifications from "layouts/notifications";
 import Profile from "layouts/profile";
 import SignIn from "layouts/authentication/sign-in";
 import SignUp from "layouts/authentication/sign-up";
+import Logout from "layouts/authentication/logout";
+import AuthCallback from "layouts/authentication/authCallback";
+import ComplaintsList from "layouts/complaints";
+import ComplaintDetail from "layouts/complaints/detail";
+import CreateComplaint from "layouts/complaints/create";
 
 // @mui icons
 import Icon from "@mui/material/Icon";
@@ -59,46 +64,26 @@ const routes = [
   },
   {
     type: "collapse",
-    name: "Tables",
-    key: "tables",
-    icon: <Icon fontSize="small">table_view</Icon>,
-    route: "/tables",
-    component: <Tables />,
+    name: "Plaintes",
+    key: "complaints",
+    icon: <Icon fontSize="small">assignment</Icon>,
+    route: "/complaints",
+    component: <ComplaintsList />,
   },
   {
-    type: "collapse",
-    name: "Billing",
-    key: "billing",
-    icon: <Icon fontSize="small">receipt_long</Icon>,
-    route: "/billing",
-    component: <Billing />,
+    type: "route", // Route cachée du menu
+    key: "complaint-detail",
+    route: "/complaints/:id",
+    component: <ComplaintDetail />,
   },
   {
-    type: "collapse",
-    name: "RTL",
-    key: "rtl",
-    icon: <Icon fontSize="small">format_textdirection_r_to_l</Icon>,
-    route: "/rtl",
-    component: <RTL />,
+    type: "route", // Route cachée du menu
+    key: "complaint-create",
+    route: "/complaints/create",
+    component: <CreateComplaint />,
   },
   {
-    type: "collapse",
-    name: "Notifications",
-    key: "notifications",
-    icon: <Icon fontSize="small">notifications</Icon>,
-    route: "/notifications",
-    component: <Notifications />,
-  },
-  {
-    type: "collapse",
-    name: "Profile",
-    key: "profile",
-    icon: <Icon fontSize="small">person</Icon>,
-    route: "/profile",
-    component: <Profile />,
-  },
-  {
-    type: "collapse",
+    type: "route",
     name: "Sign In",
     key: "sign-in",
     icon: <Icon fontSize="small">login</Icon>,
@@ -107,11 +92,71 @@ const routes = [
   },
   {
     type: "collapse",
-    name: "Sign Up",
-    key: "sign-up",
-    icon: <Icon fontSize="small">assignment</Icon>,
-    route: "/authentication/sign-up",
-    component: <SignUp />,
+    name: "Sign Out",
+    key: "sign-out",
+    icon: <Icon fontSize="small">logout</Icon>,
+    route: "/authentication/logout",
+    component: <Logout />,
+  },
+  {
+    type: "route",
+    name: "Auth Callback",
+    key: "auth-callback",
+    route: "/auth-callback",
+    component: <AuthCallback />,
+    invisible: true,
+  },
+  {
+    /*
+    {
+      type: "collapse",
+      name: "Tables",
+      key: "tables",
+      icon: <Icon fontSize="small">table_view</Icon>,
+      route: "/tables",
+      component: <Tables />,
+    },
+    {
+      type: "collapse",
+      name: "Billing",
+      key: "billing",
+      icon: <Icon fontSize="small">receipt_long</Icon>,
+      route: "/billing",
+      component: <Billing />,
+    },
+    {
+      type: "collapse",
+      name: "RTL",
+      key: "rtl",
+      icon: <Icon fontSize="small">format_textdirection_r_to_l</Icon>,
+      route: "/rtl",
+      component: <RTL />,
+    },
+    {
+      type: "collapse",
+      name: "Notifications",
+      key: "notifications",
+      icon: <Icon fontSize="small">notifications</Icon>,
+      route: "/notifications",
+      component: <Notifications />,
+    },
+    {
+      type: "collapse",
+      name: "Profile",
+      key: "profile",
+      icon: <Icon fontSize="small">person</Icon>,
+      route: "/profile",
+      component: <Profile />,
+    },
+    {
+      type: "collapse",
+      name: "Sign Up",
+      key: "sign-up",
+      icon: <Icon fontSize="small">assignment</Icon>,
+      route: "/authentication/sign-up",
+      component: <SignUp />,
+    },
+  */
   },
 ];
 

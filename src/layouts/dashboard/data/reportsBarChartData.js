@@ -1,19 +1,22 @@
 /**
-=========================================================
-* Material Dashboard 2 React - v2.2.0
-=========================================================
+ * Ce fichier est maintenant géré dynamiquement dans le composant Dashboard
+ * Les données sont récupérées via l'API getDashboardStats()
+ * 
+ * Format retourné pour le graphique :
+ * {
+ *   labels: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+ *   datasets: {
+ *     label: "Plaintes",
+ *     data: [12, 15, 8, 20, 18, 14, 10]
+ *   }
+ * }
+ */
 
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
+// Données par défaut si l'API échoue
 export default {
-  labels: ["M", "T", "W", "T", "F", "S", "S"],
-  datasets: { label: "Sales", data: [50, 20, 10, 22, 50, 10, 40] },
+  labels: ["Lun", "Mar", "Mer", "Jeu", "Ven", "Sam", "Dim"],
+  datasets: {
+    label: "Plaintes",
+    data: [0, 0, 0, 0, 0, 0, 0],
+  },
 };
