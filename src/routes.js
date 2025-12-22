@@ -49,6 +49,8 @@ import AuthCallback from "layouts/authentication/authCallback";
 import ComplaintsList from "layouts/complaints";
 import ComplaintDetail from "layouts/complaints/detail";
 import CreateComplaint from "layouts/complaints/create";
+import RoleBasedDashboard from "layouts/dashboard/RoleBasedDashboard";
+import UsersManagement from "layouts/users/UsersManagement";
 
 // @mui icons
 import Icon from "@mui/material/Icon";
@@ -60,7 +62,7 @@ const routes = [
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <Dashboard />,
+    component: <RoleBasedDashboard />,
   },
   {
     type: "collapse",
@@ -105,6 +107,14 @@ const routes = [
     route: "/auth-callback",
     component: <AuthCallback />,
     invisible: true,
+  },
+  {
+    type: "collapse",
+    name: "Utilisateurs",
+    key: "users",
+    icon: <Icon fontSize="small">people</Icon>,
+    route: "/users",
+    component: <UsersManagement />,
   },
   {
     /*

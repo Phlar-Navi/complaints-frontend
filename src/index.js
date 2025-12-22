@@ -20,6 +20,7 @@ import App from "App";
 
 // Material Dashboard 2 React Context Provider
 import { MaterialUIControllerProvider } from "context";
+import { SnackbarProvider } from "notistack";
 
 const container = document.getElementById("app");
 const root = createRoot(container);
