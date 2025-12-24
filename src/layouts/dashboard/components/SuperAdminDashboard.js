@@ -1,231 +1,283 @@
-// SuperAdmin Dashboard - Vue plateforme globale
+// Dashboard pour SUPER_ADMIN
+
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";
+import { useState, useEffect } from "react";
+
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import MDButton from "components/MDButton";
 import ComplexStatisticsCard from "examples/Cards/StatisticsCards/ComplexStatisticsCard";
 import DataTable from "examples/Tables/DataTable";
-import { useNavigate } from "react-router-dom";
+
+import { getGlobalStats } from "api/tenantsService";
 import PropTypes from "prop-types";
 
 SuperAdminDashboard.propTypes = {
-  stats: PropTypes.shape({
-    platform_overview: PropTypes.shape({
-      total_tenants: PropTypes.number,
-      total_complaints: PropTypes.number,
-      total_active_complaints: PropTypes.number,
-      global_sla_compliance: PropTypes.number,
-    }),
-
-    tenant_stats: PropTypes.arrayOf(
-      PropTypes.shape({
-        tenant_name: PropTypes.string,
-        total_complaints: PropTypes.number,
-        active_complaints: PropTypes.number,
-        sla_compliance_rate: PropTypes.number,
-        overdue: PropTypes.number,
-        is_premium: PropTypes.bool,
-      })
-    ),
-
-    monthly_volume: PropTypes.array, // (pas utilisé ici mais présent)
-
-    alerts: PropTypes.arrayOf(
-      PropTypes.shape({
-        message: PropTypes.string,
-      })
-    ),
-  }),
-
   onRefresh: PropTypes.func,
 };
 
-function SuperAdminDashboard({ stats, onRefresh }) {
-  const navigate = useNavigate();
+function SuperAdminDashboard({ onRefresh }) {
+  const [stats, setStats] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  if (!stats?.platform_overview) {
+  useEffect(() => {
+    fetchStats();
+  }, []);
+
+  const fetchStats = async () => {
+    try {
+      setLoading(true);
+      const data = await getGlobalStats();
+      setStats(data);
+    } catch (error) {
+      console.error("Erreur chargement stats:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (loading || !stats) {
     return (
       <MDBox textAlign="center" py={3}>
-        <MDTypography variant="h6">Aucune donnée disponible</MDTypography>
+        <MDTypography variant="h6">Chargement des statistiques...</MDTypography>
       </MDBox>
     );
   }
 
-  const { platform_overview, tenant_stats, monthly_volume, alerts } = stats;
+  const { tenants, users, complaints, top_tenants } = stats;
 
-  // Colonnes pour le tableau des tenants
-  const tenantColumns = [
-    { Header: "tenant", accessor: "tenant", width: "30%", align: "left" },
-    { Header: "plaintes", accessor: "complaints", width: "15%", align: "center" },
-    { Header: "actives", accessor: "active", width: "15%", align: "center" },
-    { Header: "sla (%)", accessor: "sla", width: "15%", align: "center" },
-    { Header: "retard", accessor: "overdue", width: "15%", align: "center" },
-    { Header: "type", accessor: "type", width: "10%", align: "center" },
+  // Colonnes pour le tableau des top tenants
+  const columns = [
+    { Header: "Tenant", accessor: "name", width: "50%", align: "left" },
+    { Header: "Plaintes", accessor: "complaints", width: "25%", align: "center" },
+    { Header: "Actions", accessor: "actions", width: "25%", align: "center" },
   ];
 
-  const tenantRows = tenant_stats.map((tenant) => ({
-    tenant: (
+  const rows = (top_tenants || []).map((tenant) => ({
+    name: (
       <MDTypography variant="button" fontWeight="medium">
         {tenant.tenant_name}
       </MDTypography>
     ),
     complaints: (
-      <MDTypography variant="caption" color="text">
-        {tenant.total_complaints}
+      <MDTypography variant="caption" color="text" fontWeight="medium">
+        {tenant.complaint_count}
       </MDTypography>
     ),
-    active: (
-      <MDTypography variant="caption" color="text">
-        {tenant.active_complaints}
-      </MDTypography>
-    ),
-    sla: (
+    actions: (
       <MDTypography
+        component="a"
+        href={`/tenants/${tenant.tenant_id}`}
         variant="caption"
-        color={tenant.sla_compliance_rate >= 70 ? "success" : "error"}
+        color="info"
         fontWeight="medium"
+        sx={{ cursor: "pointer" }}
       >
-        {tenant.sla_compliance_rate}%
+        Voir détails
       </MDTypography>
-    ),
-    overdue: (
-      <MDTypography
-        variant="caption"
-        color={tenant.overdue > 0 ? "error" : "text"}
-        fontWeight={tenant.overdue > 0 ? "medium" : "regular"}
-      >
-        {tenant.overdue}
-      </MDTypography>
-    ),
-    type: (
-      <Icon color={tenant.is_premium ? "warning" : "secondary"}>
-        {tenant.is_premium ? "workspace_premium" : "business"}
-      </Icon>
     ),
   }));
 
   return (
     <MDBox>
-      {/* Header avec actions */}
-      <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <MDBox>
-          <MDTypography variant="h4" fontWeight="medium">
-            Vue Plateforme Globale
-          </MDTypography>
-          <MDTypography variant="button" color="text">
-            Supervision multi-tenants
-          </MDTypography>
-        </MDBox>
-        <MDBox display="flex" gap={1}>
-          <MDButton variant="outlined" color="info" onClick={onRefresh}>
-            <Icon sx={{ mr: 1 }}>refresh</Icon>
-            Actualiser
-          </MDButton>
-          <MDButton variant="gradient" color="success" onClick={() => navigate("/tenants/create")}>
-            <Icon sx={{ mr: 1 }}>add</Icon>
-            Nouveau tenant
-          </MDButton>
-        </MDBox>
-      </MDBox>
+      {/* Statistiques principales */}
+      <Grid container spacing={3}>
+        <Grid item xs={12} md={6} lg={3}>
+          <MDBox mb={1.5}>
+            <ComplexStatisticsCard
+              color="dark"
+              icon="apartment"
+              title="Total Tenants"
+              count={tenants.total}
+              percentage={{
+                color: tenants.new_this_month > 0 ? "success" : "secondary",
+                amount: `+${tenants.new_this_month}`,
+                label: "ce mois-ci",
+              }}
+            />
+          </MDBox>
+        </Grid>
 
-      {/* Alertes critiques */}
-      {alerts && alerts.length > 0 && (
-        <MDBox mb={3}>
+        <Grid item xs={12} md={6} lg={3}>
+          <MDBox mb={1.5}>
+            <ComplexStatisticsCard
+              color="success"
+              icon="check_circle"
+              title="Tenants Actifs"
+              count={tenants.active}
+              percentage={{
+                color: tenants.active > tenants.inactive ? "success" : "error",
+                amount: `${tenants.inactive} inactifs`,
+                label: "",
+              }}
+            />
+          </MDBox>
+        </Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <MDBox mb={1.5}>
+            <ComplexStatisticsCard
+              color="primary"
+              icon="people"
+              title="Total Utilisateurs"
+              count={users.total}
+              percentage={{
+                color: "info",
+                amount: `${Math.round(users.total / tenants.total)} /tenant`,
+                label: "moyenne",
+              }}
+            />
+          </MDBox>
+        </Grid>
+
+        <Grid item xs={12} md={6} lg={3}>
+          <MDBox mb={1.5}>
+            <ComplexStatisticsCard
+              color="warning"
+              icon="assignment"
+              title="Total Plaintes"
+              count={complaints.total}
+              percentage={{
+                color: "success",
+                amount: `${complaints.this_month}`,
+                label: "ce mois-ci",
+              }}
+            />
+          </MDBox>
+        </Grid>
+      </Grid>
+
+      {/* Statistiques détaillées */}
+      <Grid container spacing={3} mt={2}>
+        <Grid item xs={12} md={6}>
           <Card>
-            <MDBox p={2} display="flex" alignItems="center" bgcolor="error.main" borderRadius="lg">
-              <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
-                warning
-              </Icon>
-              <MDBox>
-                <MDTypography variant="h6" color="white">
-                  {alerts.length} alerte(s) nécessitant attention
-                </MDTypography>
-                <MDTypography variant="caption" color="white">
-                  {alerts[0]?.message}
-                </MDTypography>
+            <MDBox p={3}>
+              <MDTypography variant="h6" fontWeight="medium" gutterBottom>
+                Répartition des Tenants
+              </MDTypography>
+              <MDBox mt={2}>
+                <MDBox display="flex" justifyContent="space-between" mb={1}>
+                  <MDTypography variant="button" color="text">
+                    Actifs
+                  </MDTypography>
+                  <MDTypography variant="button" fontWeight="medium" color="success">
+                    {tenants.active}
+                  </MDTypography>
+                </MDBox>
+                <MDBox display="flex" justifyContent="space-between" mb={1}>
+                  <MDTypography variant="button" color="text">
+                    Inactifs
+                  </MDTypography>
+                  <MDTypography variant="button" fontWeight="medium" color="error">
+                    {tenants.inactive}
+                  </MDTypography>
+                </MDBox>
+                <MDBox display="flex" justifyContent="space-between" mb={1}>
+                  <MDTypography variant="button" color="text">
+                    Premium
+                  </MDTypography>
+                  <MDTypography variant="button" fontWeight="medium" color="warning">
+                    {tenants.premium}
+                  </MDTypography>
+                </MDBox>
+                <MDBox display="flex" justifyContent="space-between">
+                  <MDTypography variant="button" color="text">
+                    Nouveaux ce mois
+                  </MDTypography>
+                  <MDTypography variant="button" fontWeight="medium" color="info">
+                    {tenants.new_this_month}
+                  </MDTypography>
+                </MDBox>
               </MDBox>
             </MDBox>
           </Card>
-        </MDBox>
-      )}
-
-      {/* Statistiques principales */}
-      <Grid container spacing={3} mb={3}>
-        <Grid item xs={12} md={6} lg={3}>
-          <ComplexStatisticsCard
-            color="primary"
-            icon="business"
-            title="Tenants actifs"
-            count={platform_overview.total_tenants}
-          />
         </Grid>
 
-        <Grid item xs={12} md={6} lg={3}>
-          <ComplexStatisticsCard
-            color="info"
-            icon="receipt_long"
-            title="Total plaintes"
-            count={platform_overview.total_complaints}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <ComplexStatisticsCard
-            color="warning"
-            icon="pending_actions"
-            title="Plaintes actives"
-            count={platform_overview.total_active_complaints}
-          />
-        </Grid>
-
-        <Grid item xs={12} md={6} lg={3}>
-          <ComplexStatisticsCard
-            color="success"
-            icon="verified"
-            title="SLA Global"
-            count={`${platform_overview.global_sla_compliance}%`}
-            percentage={{
-              color: platform_overview.global_sla_compliance >= 70 ? "success" : "error",
-              amount:
-                platform_overview.global_sla_compliance >= 70 ? "Excellent" : "Attention requise",
-              label: "conformité",
-            }}
-          />
-        </Grid>
-      </Grid>
-
-      {/* Tableau des tenants */}
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
+        <Grid item xs={12} md={6}>
           <Card>
-            <MDBox
-              mx={2}
-              mt={-3}
-              py={3}
-              px={2}
-              variant="gradient"
-              bgColor="info"
-              borderRadius="lg"
-              coloredShadow="info"
-            >
-              <MDTypography variant="h6" color="white">
-                Performance par Tenant
+            <MDBox p={3}>
+              <MDTypography variant="h6" fontWeight="medium" gutterBottom>
+                Activité Globale
               </MDTypography>
-            </MDBox>
-            <MDBox pt={3}>
-              <DataTable
-                table={{ columns: tenantColumns, rows: tenantRows }}
-                isSorted={false}
-                entriesPerPage={false}
-                showTotalEntries={false}
-                noEndBorder
-              />
+              <MDBox mt={2}>
+                <MDBox display="flex" alignItems="center" mb={2}>
+                  <Icon color="primary" sx={{ mr: 2 }}>
+                    assignment
+                  </Icon>
+                  <MDBox>
+                    <MDTypography variant="button" color="text">
+                      Plaintes totales
+                    </MDTypography>
+                    <MDTypography variant="h5" fontWeight="medium">
+                      {complaints.total}
+                    </MDTypography>
+                  </MDBox>
+                </MDBox>
+                <MDBox display="flex" alignItems="center" mb={2}>
+                  <Icon color="success" sx={{ mr: 2 }}>
+                    trending_up
+                  </Icon>
+                  <MDBox>
+                    <MDTypography variant="button" color="text">
+                      Ce mois-ci
+                    </MDTypography>
+                    <MDTypography variant="h5" fontWeight="medium" color="success">
+                      {complaints.this_month}
+                    </MDTypography>
+                  </MDBox>
+                </MDBox>
+                <MDBox display="flex" alignItems="center">
+                  <Icon color="info" sx={{ mr: 2 }}>
+                    bar_chart
+                  </Icon>
+                  <MDBox>
+                    <MDTypography variant="button" color="text">
+                      Moyenne par tenant
+                    </MDTypography>
+                    <MDTypography variant="h5" fontWeight="medium">
+                      {Math.round(complaints.total / tenants.total)}
+                    </MDTypography>
+                  </MDBox>
+                </MDBox>
+              </MDBox>
             </MDBox>
           </Card>
         </Grid>
       </Grid>
+
+      {/* Top Tenants */}
+      {top_tenants && top_tenants.length > 0 && (
+        <Grid container spacing={3} mt={2}>
+          <Grid item xs={12}>
+            <Card>
+              <MDBox
+                mx={2}
+                mt={-3}
+                py={3}
+                px={2}
+                variant="gradient"
+                bgColor="info"
+                borderRadius="lg"
+                coloredShadow="info"
+              >
+                <MDTypography variant="h6" color="white">
+                  Top 5 Tenants - Plaintes
+                </MDTypography>
+              </MDBox>
+              <MDBox p={3}>
+                <DataTable
+                  table={{ columns, rows }}
+                  showTotalEntries={false}
+                  isSorted={false}
+                  noEndBorder
+                  entriesPerPage={false}
+                />
+              </MDBox>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
     </MDBox>
   );
 }

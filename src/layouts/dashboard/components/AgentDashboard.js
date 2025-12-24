@@ -86,6 +86,7 @@ function AgentDashboard({ stats, user, onRefresh }) {
 
   // Extraire les stats réelles de l'objet parent
   const actualStats = stats?.stats || stats;
+  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
 
   console.log("7. actualStats:", actualStats);
   console.log("8. actualStats?.overview:", actualStats?.overview);
@@ -143,10 +144,10 @@ function AgentDashboard({ stats, user, onRefresh }) {
       <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <MDBox>
           <MDTypography variant="h4" fontWeight="medium">
-            Bonjour {user?.name || "Agent"} 👋
+            Bonjour {userData?.first_name || "Agent"}
           </MDTypography>
           <MDTypography variant="button" color="text">
-            Voici vos indicateurs personnels
+            Catégorie : Agent
           </MDTypography>
         </MDBox>
         <MDButton variant="outlined" color="info" onClick={onRefresh}>
@@ -163,7 +164,7 @@ function AgentDashboard({ stats, user, onRefresh }) {
               <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
                 priority_high
               </Icon>
-              <MDTypography variant="h6" color="white">
+              <MDTypography variant="h6" color="black">
                 {urgentCount} plainte(s) urgente(s) en cours
               </MDTypography>
             </MDBox>

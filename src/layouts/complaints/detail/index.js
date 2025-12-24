@@ -134,6 +134,12 @@ function ComplaintDetail() {
     return colors[status] || "default";
   };
 
+  const user = JSON.parse(localStorage.getItem("user"));
+  const role = user?.role;
+
+  const canAttach = !["AUDITOR", "SUPER_ADMIN", "AGENT"].includes(role);
+  const canChange = !["AUDITOR"].includes(role);
+
   return (
     <DashboardLayout>
       <DashboardNavbar />
@@ -323,17 +329,19 @@ function ComplaintDetail() {
           {/* Actions et sidebar */}
           <Grid item xs={12} lg={4}>
             {/* Actions rapides */}
-            <Card sx={{ mb: 3 }}>
-              <MDBox p={3}>
-                <MDTypography variant="h6" fontWeight="medium" gutterBottom>
-                  Actions rapides
-                </MDTypography>
-                <MDBox display="flex" flexDirection="column" gap={1}>
-                  <ComplaintStatusUpdate complaint={complaint} onUpdate={fetchComplaintData} />
-                  <ComplaintAssignment complaint={complaint} onUpdate={fetchComplaintData} />
+            {canChange && (
+              <Card sx={{ mb: 3 }}>
+                <MDBox p={3}>
+                  <MDTypography variant="h6" fontWeight="medium" gutterBottom>
+                    Actions rapides
+                  </MDTypography>
+                  <MDBox display="flex" flexDirection="column" gap={1}>
+                    <ComplaintStatusUpdate complaint={complaint} onUpdate={fetchComplaintData} />
+                    <ComplaintAssignment complaint={complaint} onUpdate={fetchComplaintData} />
+                  </MDBox>
                 </MDBox>
-              </MDBox>
-            </Card>
+              </Card>
+            )}
 
             {/* Statistiques */}
             <Card>

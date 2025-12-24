@@ -23,6 +23,10 @@ export function ComplaintStatusUpdate({ complaint, onUpdate }) {
   const [open, setOpen] = useState(false);
   const [newStatus, setNewStatus] = useState(complaint.status);
   const [loading, setLoading] = useState(false);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const role = user?.role;
+
+  const canChange = !["AUDITOR"].includes(role);
 
   const handleUpdate = async () => {
     if (newStatus === complaint.status) {

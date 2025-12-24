@@ -20,6 +20,7 @@ import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import { useSnackbar } from "notistack";
 import axios from "axios";
+import { ENDPOINTS } from "api/endpoints";
 
 function UsersManagement() {
   const { enqueueSnackbar } = useSnackbar();
@@ -43,7 +44,7 @@ function UsersManagement() {
   const fetchCurrentUser = async () => {
     try {
       const token = localStorage.getItem("access_token");
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/auth/me/`, {
+      const response = await axios.get(ENDPOINTS.ME, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -58,7 +59,7 @@ function UsersManagement() {
     setLoading(true);
     try {
       const token = localStorage.getItem("access_token");
-      const response = await axios.get(`${process.env.REACT_APP_API_URL}/api/users/`, {
+      const response = await axios.get(ENDPOINTS.USERS, {
         headers: {
           Authorization: `Bearer ${token}`,
         },
@@ -77,7 +78,7 @@ function UsersManagement() {
 
     try {
       const token = localStorage.getItem("access_token");
-      await axios.delete(`${process.env.REACT_APP_API_URL}/api/users/${userToDelete.id}/`, {
+      await axios.delete(`${ENDPOINTS.USERS}${userToDelete.id}/`, {
         headers: {
           Authorization: `Bearer ${token}`,
         },

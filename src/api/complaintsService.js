@@ -23,13 +23,13 @@ export const getComplaints = async (filters = {}) => {
   const params = new URLSearchParams();
 
   Object.entries(filters).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
+    if (value !== undefined && value !== null && value !== "" && value !== "all") {
       params.append(key, value);
     }
   });
 
-  //const url = `${BASE_URL}/complaints/${params.toString() ? `?${params.toString()}` : ""}`;
   const url = ENDPOINTS.COMPLAINT_DETAIL(params.toString() ? `?${params.toString()}` : "");
+
   const res = await axiosClient.get(url);
   return res.data;
 };

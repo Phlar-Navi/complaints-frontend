@@ -37,7 +37,7 @@ ReceptionDashboard.propTypes = {
 
 function ReceptionDashboard({ stats, user, onRefresh }) {
   const navigate = useNavigate();
-
+  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
   // Extraire les stats réelles
   const actualStats = stats?.stats || stats;
 
@@ -91,10 +91,10 @@ function ReceptionDashboard({ stats, user, onRefresh }) {
       <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <MDBox>
           <MDTypography variant="h4" fontWeight="medium">
-            Bonjour {user?.name || "Réception"} 👋
+            Bonjour {userData?.first_name || "Réceptionniste"}
           </MDTypography>
           <MDTypography variant="button" color="text">
-            Centre de réception - Triage et assignation
+            Catégorie : Réceptioniste
           </MDTypography>
         </MDBox>
         <MDBox display="flex" gap={1}>
@@ -128,10 +128,10 @@ function ReceptionDashboard({ stats, user, onRefresh }) {
                 assignment_late
               </Icon>
               <MDBox flex={1}>
-                <MDTypography variant="h6" color="white">
+                <MDTypography variant="h6" color="black">
                   {overview.unassigned} plainte(s) en attente d&apos;assignation
                 </MDTypography>
-                <MDTypography variant="caption" color="white">
+                <MDTypography variant="caption" color="black">
                   {urgency_distribution?.HIGH?.count || 0} urgentes nécessitent attention immédiate
                 </MDTypography>
               </MDBox>
@@ -156,7 +156,7 @@ function ReceptionDashboard({ stats, user, onRefresh }) {
               <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
                 schedule
               </Icon>
-              <MDTypography variant="h6" color="white">
+              <MDTypography variant="h6" color="black">
                 {overview.overdue} plainte(s) en retard
               </MDTypography>
             </MDBox>
@@ -338,7 +338,6 @@ function ReceptionDashboard({ stats, user, onRefresh }) {
                     <ListItem
                       key={agent.agent_id}
                       sx={{
-                        border: "1px solid",
                         borderColor: "grey.300",
                         borderRadius: 1,
                         mb: 1,

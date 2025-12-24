@@ -51,9 +51,17 @@ import ComplaintDetail from "layouts/complaints/detail";
 import CreateComplaint from "layouts/complaints/create";
 import RoleBasedDashboard from "layouts/dashboard/RoleBasedDashboard";
 import UsersManagement from "layouts/users/UsersManagement";
-
+import TenantsManagement from "layouts/tenants/index";
 // @mui icons
 import Icon from "@mui/material/Icon";
+
+const rawUser = localStorage.getItem("user");
+const userData = rawUser ? JSON.parse(rawUser) : null;
+
+const isTenantAdmin = userData?.role === "TENANT_ADMIN";
+const isSuperAdmin = userData?.role === "SUPER_ADMIN";
+
+console.log("Utilisateur: ", userData?.email, " Rôle: ", userData?.role);
 
 const routes = [
   {
@@ -64,14 +72,30 @@ const routes = [
     route: "/dashboard",
     component: <RoleBasedDashboard />,
   },
-  {
-    type: "collapse",
-    name: "Plaintes",
-    key: "complaints",
-    icon: <Icon fontSize="small">assignment</Icon>,
-    route: "/complaints",
-    component: <ComplaintsList />,
-  },
+  ...(isSuperAdmin
+    ? [
+        {
+          type: "collapse",
+          name: "Tenants",
+          key: "tenants",
+          icon: <Icon fontSize="small">apartment</Icon>,
+          route: "/tenants",
+          component: <TenantsManagement />,
+        },
+      ]
+    : []),
+  ...(!isSuperAdmin
+    ? [
+        {
+          type: "collapse",
+          name: "Plaintes",
+          key: "complaints",
+          icon: <Icon fontSize="small">assignment</Icon>,
+          route: "/complaints",
+          component: <ComplaintsList />,
+        },
+      ]
+    : []),
   {
     type: "route", // Route cachée du menu
     key: "complaint-detail",
@@ -94,6 +118,34 @@ const routes = [
   },
   {
     type: "collapse",
+    name: "Notifications",
+    key: "notifications",
+    icon: <Icon fontSize="small">notifications</Icon>,
+    route: "/notifications",
+    component: <Notifications />,
+  },
+  {
+    type: "collapse",
+    name: "Profile",
+    key: "profile",
+    icon: <Icon fontSize="small">person</Icon>,
+    route: "/profile",
+    component: <Profile />,
+  },
+  ...(isTenantAdmin
+    ? [
+        {
+          type: "collapse",
+          name: "Utilisateurs",
+          key: "users",
+          icon: <Icon fontSize="small">people</Icon>,
+          route: "/users",
+          component: <UsersManagement />,
+        },
+      ]
+    : []),
+  {
+    type: "collapse",
     name: "Sign Out",
     key: "sign-out",
     icon: <Icon fontSize="small">logout</Icon>,
@@ -107,14 +159,6 @@ const routes = [
     route: "/auth-callback",
     component: <AuthCallback />,
     invisible: true,
-  },
-  {
-    type: "collapse",
-    name: "Utilisateurs",
-    key: "users",
-    icon: <Icon fontSize="small">people</Icon>,
-    route: "/users",
-    component: <UsersManagement />,
   },
   {
     /*

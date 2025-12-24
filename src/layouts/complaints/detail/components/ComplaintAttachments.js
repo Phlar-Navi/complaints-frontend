@@ -20,6 +20,10 @@ import PropTypes from "prop-types";
 export function ComplaintAttachments({ complaintId, attachments = [], onRefresh }) {
   const [uploading, setUploading] = useState(false);
   const [selectedFile, setSelectedFile] = useState(null);
+  const user = JSON.parse(localStorage.getItem("user"));
+  const role = user?.role;
+
+  const canAttach = !["AUDITOR", "SUPER_ADMIN", "AGENT"].includes(role);
 
   const handleFileSelect = (e) => {
     const file = e.target.files[0];
@@ -64,44 +68,46 @@ export function ComplaintAttachments({ complaintId, attachments = [], onRefresh 
   return (
     <MDBox>
       {/* Upload zone */}
-      <MDBox
-        border="2px dashed"
-        borderColor="grey.300"
-        borderRadius="lg"
-        p={3}
-        textAlign="center"
-        mb={3}
-      >
-        <input
-          type="file"
-          id="file-input"
-          style={{ display: "none" }}
-          onChange={handleFileSelect}
-        />
-        <label htmlFor="file-input">
-          <MDButton variant="outlined" color="info" component="span">
-            <Icon sx={{ mr: 1 }}>upload_file</Icon>
-            Choisir un fichier
-          </MDButton>
-        </label>
-        {selectedFile && (
-          <MDBox mt={2}>
-            <MDTypography variant="body2" color="text">
-              Fichier sélectionné: {selectedFile.name}
-            </MDTypography>
-            <MDButton
-              variant="gradient"
-              color="success"
-              size="small"
-              onClick={handleUpload}
-              disabled={uploading}
-              sx={{ mt: 1 }}
-            >
-              {uploading ? "Upload..." : "Uploader"}
+      {canAttach && (
+        <MDBox
+          border="2px dashed"
+          borderColor="grey.300"
+          borderRadius="lg"
+          p={3}
+          textAlign="center"
+          mb={3}
+        >
+          <input
+            type="file"
+            id="file-input"
+            style={{ display: "none" }}
+            onChange={handleFileSelect}
+          />
+          <label htmlFor="file-input">
+            <MDButton variant="outlined" color="info" component="span">
+              <Icon sx={{ mr: 1 }}>upload_file</Icon>
+              Choisir un fichier
             </MDButton>
-          </MDBox>
-        )}
-      </MDBox>
+          </label>
+          {selectedFile && (
+            <MDBox mt={2}>
+              <MDTypography variant="body2" color="text">
+                Fichier sélectionné: {selectedFile.name}
+              </MDTypography>
+              <MDButton
+                variant="gradient"
+                color="success"
+                size="small"
+                onClick={handleUpload}
+                disabled={uploading}
+                sx={{ mt: 1 }}
+              >
+                {uploading ? "Upload..." : "Uploader"}
+              </MDButton>
+            </MDBox>
+          )}
+        </MDBox>
+      )}
 
       {/* Liste des pièces jointes */}
       {attachments.length === 0 ? (

@@ -1,189 +1,353 @@
 /**
-=========================================================
-* Material Dashboard 2 React - v2.2.0
-=========================================================
-
-* Product Page: https://www.creative-tim.com/product/material-dashboard-react
-* Copyright 2023 Creative Tim (https://www.creative-tim.com)
-
-Coded by www.creative-tim.com
-
- =========================================================
-
-* The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
-*/
-
-import { useState } from "react";
-
-// @mui material components
+ * Page complète de gestion des notifications
+ */
+import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
+import Icon from "@mui/material/Icon";
+import Tabs from "@mui/material/Tabs";
+import Tab from "@mui/material/Tab";
+import List from "@mui/material/List";
+import ListItem from "@mui/material/ListItem";
+import ListItemText from "@mui/material/ListItemText";
+import ListItemIcon from "@mui/material/ListItemIcon";
+import IconButton from "@mui/material/IconButton";
+import Chip from "@mui/material/Chip";
+import Tooltip from "@mui/material/Tooltip";
 
-// Material Dashboard 2 React components
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
-import MDAlert from "components/MDAlert";
 import MDButton from "components/MDButton";
-import MDSnackbar from "components/MDSnackbar";
 
-// Material Dashboard 2 React example components
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
 import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
 
+import {
+  getNotifications,
+  getUnreadNotifications,
+  markNotificationAsRead,
+  markAllNotificationsAsRead,
+  deleteNotification,
+  deleteReadNotifications,
+  getNotificationStats,
+  NOTIFICATION_TYPES,
+} from "api/notificationsService";
+
 function Notifications() {
-  const [successSB, setSuccessSB] = useState(false);
-  const [infoSB, setInfoSB] = useState(false);
-  const [warningSB, setWarningSB] = useState(false);
-  const [errorSB, setErrorSB] = useState(false);
+  const navigate = useNavigate();
+  const [tab, setTab] = useState(0); // 0: Toutes, 1: Non lues, 2: Lues
+  const [notifications, setNotifications] = useState([]);
+  const [stats, setStats] = useState({ total: 0, unread: 0, read: 0 });
+  const [loading, setLoading] = useState(false);
 
-  const openSuccessSB = () => setSuccessSB(true);
-  const closeSuccessSB = () => setSuccessSB(false);
-  const openInfoSB = () => setInfoSB(true);
-  const closeInfoSB = () => setInfoSB(false);
-  const openWarningSB = () => setWarningSB(true);
-  const closeWarningSB = () => setWarningSB(false);
-  const openErrorSB = () => setErrorSB(true);
-  const closeErrorSB = () => setErrorSB(false);
+  useEffect(() => {
+    loadData();
+  }, [tab]);
 
-  const alertContent = (name) => (
-    <MDTypography variant="body2" color="white">
-      A simple {name} alert with{" "}
-      <MDTypography component="a" href="#" variant="body2" fontWeight="medium" color="white">
-        an example link
-      </MDTypography>
-      . Give it a click if you like.
-    </MDTypography>
-  );
+  const loadData = async () => {
+    try {
+      setLoading(true);
+      const [allNotifs, statsData] = await Promise.all([
+        getNotifications(),
+        getNotificationStats(),
+      ]);
 
-  const renderSuccessSB = (
-    <MDSnackbar
-      color="success"
-      icon="check"
-      title="Material Dashboard"
-      content="Hello, world! This is a notification message"
-      dateTime="11 mins ago"
-      open={successSB}
-      onClose={closeSuccessSB}
-      close={closeSuccessSB}
-      bgWhite
-    />
-  );
+      setStats(statsData);
 
-  const renderInfoSB = (
-    <MDSnackbar
-      icon="notifications"
-      title="Material Dashboard"
-      content="Hello, world! This is a notification message"
-      dateTime="11 mins ago"
-      open={infoSB}
-      onClose={closeInfoSB}
-      close={closeInfoSB}
-    />
-  );
+      // Filtrer selon l'onglet
+      let filtered = allNotifs;
+      if (tab === 1) {
+        // Non lues
+        filtered = allNotifs.filter((n) => !n.is_read);
+      } else if (tab === 2) {
+        // Lues
+        filtered = allNotifs.filter((n) => n.is_read);
+      }
 
-  const renderWarningSB = (
-    <MDSnackbar
-      color="warning"
-      icon="star"
-      title="Material Dashboard"
-      content="Hello, world! This is a notification message"
-      dateTime="11 mins ago"
-      open={warningSB}
-      onClose={closeWarningSB}
-      close={closeWarningSB}
-      bgWhite
-    />
-  );
+      setNotifications(filtered);
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-  const renderErrorSB = (
-    <MDSnackbar
-      color="error"
-      icon="warning"
-      title="Material Dashboard"
-      content="Hello, world! This is a notification message"
-      dateTime="11 mins ago"
-      open={errorSB}
-      onClose={closeErrorSB}
-      close={closeErrorSB}
-      bgWhite
-    />
-  );
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      await markNotificationAsRead(notificationId);
+      loadData();
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      setLoading(true);
+      await markAllNotificationsAsRead();
+      loadData();
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async (notificationId) => {
+    if (!window.confirm("Supprimer cette notification ?")) return;
+
+    try {
+      await deleteNotification(notificationId);
+      loadData();
+    } catch (error) {
+      console.error("Erreur:", error);
+    }
+  };
+
+  const handleDeleteReadAll = async () => {
+    if (!window.confirm("Supprimer toutes les notifications lues ?")) return;
+
+    try {
+      setLoading(true);
+      await deleteReadNotifications();
+      loadData();
+    } catch (error) {
+      console.error("Erreur:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleNotificationClick = (notification) => {
+    if (!notification.is_read) {
+      handleMarkAsRead(notification.id);
+    }
+
+    if (notification.link) {
+      navigate(notification.link);
+    }
+  };
+
+  const getNotificationIcon = (type) => {
+    return NOTIFICATION_TYPES[type]?.icon || "notifications";
+  };
+
+  const getNotificationColor = (type) => {
+    return NOTIFICATION_TYPES[type]?.color || "info";
+  };
+
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleString("fr-FR", {
+      day: "2-digit",
+      month: "short",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
 
   return (
     <DashboardLayout>
       <DashboardNavbar />
-      <MDBox mt={6} mb={3}>
-        <Grid container spacing={3} justifyContent="center">
-          <Grid item xs={12} lg={8}>
+      <MDBox py={3}>
+        <Grid container spacing={3}>
+          {/* Statistiques */}
+          <Grid item xs={12} md={4}>
             <Card>
-              <MDBox p={2}>
-                <MDTypography variant="h5">Alerts</MDTypography>
-              </MDBox>
-              <MDBox pt={2} px={2}>
-                <MDAlert color="primary" dismissible>
-                  {alertContent("primary")}
-                </MDAlert>
-                <MDAlert color="secondary" dismissible>
-                  {alertContent("secondary")}
-                </MDAlert>
-                <MDAlert color="success" dismissible>
-                  {alertContent("success")}
-                </MDAlert>
-                <MDAlert color="error" dismissible>
-                  {alertContent("error")}
-                </MDAlert>
-                <MDAlert color="warning" dismissible>
-                  {alertContent("warning")}
-                </MDAlert>
-                <MDAlert color="info" dismissible>
-                  {alertContent("info")}
-                </MDAlert>
-                <MDAlert color="light" dismissible>
-                  {alertContent("light")}
-                </MDAlert>
-                <MDAlert color="dark" dismissible>
-                  {alertContent("dark")}
-                </MDAlert>
+              <MDBox p={3} textAlign="center">
+                <Icon fontSize="large" color="info">
+                  notifications
+                </Icon>
+                <MDTypography variant="h3" fontWeight="medium" mt={1}>
+                  {stats.total}
+                </MDTypography>
+                <MDTypography variant="button" color="text">
+                  Total notifications
+                </MDTypography>
               </MDBox>
             </Card>
           </Grid>
 
-          <Grid item xs={12} lg={8}>
+          <Grid item xs={12} md={4}>
             <Card>
-              <MDBox p={2} lineHeight={0}>
-                <MDTypography variant="h5">Notifications</MDTypography>
-                <MDTypography variant="button" color="text" fontWeight="regular">
-                  Notifications on this page use Toasts from Bootstrap. Read more details here.
+              <MDBox p={3} textAlign="center">
+                <Icon fontSize="large" color="error">
+                  notifications_active
+                </Icon>
+                <MDTypography variant="h3" fontWeight="medium" mt={1}>
+                  {stats.unread}
+                </MDTypography>
+                <MDTypography variant="button" color="text">
+                  Non lues
                 </MDTypography>
               </MDBox>
-              <MDBox p={2}>
-                <Grid container spacing={3}>
-                  <Grid item xs={12} sm={6} lg={3}>
-                    <MDButton variant="gradient" color="success" onClick={openSuccessSB} fullWidth>
-                      success notification
-                    </MDButton>
-                    {renderSuccessSB}
-                  </Grid>
-                  <Grid item xs={12} sm={6} lg={3}>
-                    <MDButton variant="gradient" color="info" onClick={openInfoSB} fullWidth>
-                      info notification
-                    </MDButton>
-                    {renderInfoSB}
-                  </Grid>
-                  <Grid item xs={12} sm={6} lg={3}>
-                    <MDButton variant="gradient" color="warning" onClick={openWarningSB} fullWidth>
-                      warning notification
-                    </MDButton>
-                    {renderWarningSB}
-                  </Grid>
-                  <Grid item xs={12} sm={6} lg={3}>
-                    <MDButton variant="gradient" color="error" onClick={openErrorSB} fullWidth>
-                      error notification
-                    </MDButton>
-                    {renderErrorSB}
-                  </Grid>
-                </Grid>
+            </Card>
+          </Grid>
+
+          <Grid item xs={12} md={4}>
+            <Card>
+              <MDBox p={3} textAlign="center">
+                <Icon fontSize="large" color="success">
+                  check_circle
+                </Icon>
+                <MDTypography variant="h3" fontWeight="medium" mt={1}>
+                  {stats.read}
+                </MDTypography>
+                <MDTypography variant="button" color="text">
+                  Lues
+                </MDTypography>
+              </MDBox>
+            </Card>
+          </Grid>
+
+          {/* Liste des notifications */}
+          <Grid item xs={12}>
+            <Card>
+              {/* Header avec actions */}
+              <MDBox
+                mx={2}
+                mt={-3}
+                py={3}
+                px={2}
+                variant="gradient"
+                bgColor="info"
+                borderRadius="lg"
+                coloredShadow="info"
+              >
+                <MDBox display="flex" justifyContent="space-between" alignItems="center">
+                  <MDTypography variant="h6" color="white">
+                    Mes notifications
+                  </MDTypography>
+                  <MDBox display="flex" gap={1}>
+                    {stats.unread > 0 && (
+                      <MDButton
+                        variant="contained"
+                        color="white"
+                        size="small"
+                        onClick={handleMarkAllRead}
+                        disabled={loading}
+                      >
+                        Tout marquer lu
+                      </MDButton>
+                    )}
+                    {stats.read > 0 && (
+                      <MDButton
+                        variant="contained"
+                        color="white"
+                        size="small"
+                        onClick={handleDeleteReadAll}
+                        disabled={loading}
+                      >
+                        Supprimer lues
+                      </MDButton>
+                    )}
+                  </MDBox>
+                </MDBox>
+              </MDBox>
+
+              {/* Onglets */}
+              <MDBox px={3} pt={2}>
+                <Tabs value={tab} onChange={(e, newValue) => setTab(newValue)}>
+                  <Tab label={`Toutes (${stats.total})`} />
+                  <Tab label={`Non lues (${stats.unread})`} />
+                  <Tab label={`Lues (${stats.read})`} />
+                </Tabs>
+              </MDBox>
+
+              {/* Liste */}
+              <MDBox p={3}>
+                {loading ? (
+                  <MDBox textAlign="center" py={3}>
+                    <MDTypography variant="body2" color="text">
+                      Chargement...
+                    </MDTypography>
+                  </MDBox>
+                ) : notifications.length === 0 ? (
+                  <MDBox textAlign="center" py={5}>
+                    <Icon fontSize="large" color="disabled">
+                      inbox
+                    </Icon>
+                    <MDTypography variant="body2" color="text" mt={1}>
+                      Aucune notification
+                    </MDTypography>
+                  </MDBox>
+                ) : (
+                  <List>
+                    {notifications.map((notif) => (
+                      <ListItem
+                        key={notif.id}
+                        sx={{
+                          border: "1px solid",
+                          borderColor: notif.is_read ? "grey.300" : "info.main",
+                          borderRadius: 2,
+                          mb: 1,
+                          bgcolor: notif.is_read ? "transparent" : "grey.100",
+                          "&:hover": {
+                            bgcolor: "grey.200",
+                          },
+                        }}
+                      >
+                        <ListItemIcon>
+                          <Icon color={getNotificationColor(notif.type)}>
+                            {getNotificationIcon(notif.type)}
+                          </Icon>
+                        </ListItemIcon>
+
+                        <ListItemText
+                          onClick={() => handleNotificationClick(notif)}
+                          sx={{ cursor: "pointer", flex: 1 }}
+                          primary={
+                            <MDBox display="flex" alignItems="center" gap={1}>
+                              <MDTypography variant="button" fontWeight="medium">
+                                {notif.title}
+                              </MDTypography>
+                              {!notif.is_read && (
+                                <Chip label="Nouveau" color="error" size="small" />
+                              )}
+                            </MDBox>
+                          }
+                          secondary={
+                            <MDBox>
+                              <MDTypography variant="body2" color="text">
+                                {notif.message}
+                              </MDTypography>
+                              <MDTypography variant="caption" color="text">
+                                {formatDate(notif.created_at)}
+                              </MDTypography>
+                            </MDBox>
+                          }
+                        />
+
+                        {/* Actions */}
+                        <MDBox display="flex" gap={1}>
+                          {!notif.is_read && (
+                            <Tooltip title="Marquer comme lue">
+                              <IconButton
+                                size="small"
+                                color="info"
+                                onClick={() => handleMarkAsRead(notif.id)}
+                              >
+                                <Icon>check</Icon>
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
+                          <Tooltip title="Supprimer">
+                            <IconButton
+                              size="small"
+                              color="error"
+                              onClick={() => handleDelete(notif.id)}
+                            >
+                              <Icon>delete</Icon>
+                            </IconButton>
+                          </Tooltip>
+                        </MDBox>
+                      </ListItem>
+                    ))}
+                  </List>
+                )}
               </MDBox>
             </Card>
           </Grid>

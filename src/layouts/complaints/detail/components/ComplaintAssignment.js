@@ -26,6 +26,12 @@ export function ComplaintAssignment({ complaint, onUpdate }) {
   const [selectedAgent, setSelectedAgent] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const rawUser = localStorage.getItem("user");
+  const currentUser = rawUser ? JSON.parse(rawUser) : null;
+
+  const forbiddenRoles = ["AUDITOR", "AGENT", "SUPER_ADMIN"];
+  const canAssign = !forbiddenRoles.includes(currentUser?.role);
+
   useEffect(() => {
     if (open) {
       fetchAgents();
@@ -60,9 +66,11 @@ export function ComplaintAssignment({ complaint, onUpdate }) {
 
   return (
     <>
-      <MDButton variant="gradient" color="info" fullWidth onClick={() => setOpen(true)}>
-        {complaint.assigned_user_name ? "Réassigner" : "Assigner"}
-      </MDButton>
+      {canAssign && (
+        <MDButton variant="gradient" color="info" fullWidth onClick={() => setOpen(true)}>
+          {complaint.assigned_user_name ? "Réassigner" : "Assigner"}
+        </MDButton>
+      )}
 
       <Dialog open={open} onClose={() => setOpen(false)} maxWidth="sm" fullWidth>
         <DialogTitle>Assigner la plainte</DialogTitle>

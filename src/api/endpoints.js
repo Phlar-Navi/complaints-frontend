@@ -74,6 +74,13 @@ export const ENDPOINTS = {
   SMART_LOGIN: `${PUBLIC_API_URL}/auth/smart-login/`,
   REFRESH: `${PUBLIC_API_URL}/auth/token/refresh/`,
   TENANT_CREATE: `${PUBLIC_API_URL}/tenants/create/`,
+  TENANTS: `${PUBLIC_API_URL}/tenants/`,
+  TENANT_SPECIFIC: (id) => `${PUBLIC_API_URL}/tenants/${id}/`,
+  TENANT_ACTIVATE: (id) => `${PUBLIC_API_URL}/tenants/${id}/toggle_active/`,
+  TENANT_USERS: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/users/`,
+  TENANT_STATS: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/stats/`,
+  TENANT_ADD_DOMAIN: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/add_domain/`,
+  TENANTS_GLOBAL_STATS: `${PUBLIC_API_URL}/tenants/global-stats/`,
 
   // === ENDPOINTS TENANT-SPÉCIFIQUES ===
   LOGOUT: `${TENANT_API_URL}/auth/logout/`,
@@ -84,6 +91,21 @@ export const ENDPOINTS = {
   USERS: `${TENANT_API_URL}/users/`,
   USER_CREATE: `${TENANT_API_URL}/users/create/`,
   USER_DETAIL: (id) => `${TENANT_API_URL}/users/${id}/`,
+
+  UPDATE_PROFILE: `${TENANT_API_URL}/users/profile/`,
+  UPLOAD_AVATAR: `${TENANT_API_URL}/users/profile/avatar/`,
+  CHANGE_PASSWORD_SELF: `${TENANT_API_URL}/users/profile/password/`,
+  PREFERENCES: `${TENANT_API_URL}/users/preferences/`,
+  UPDATE_PREFERENCES: `${TENANT_API_URL}/users/preferences/`,
+
+  NOTIFICATIONS: `${TENANT_API_URL}/notifications/`,
+  NOTIFICATION_UNREAD: `${TENANT_API_URL}/notifications/unread/`,
+  NOTIFICATIONS_COUNT_UNREAD: `${TENANT_API_URL}/notifications/count_unread/`,
+  NOTIFICATIONS_MARK_READ: (id) => `${TENANT_API_URL}/notifications/${id}/mark_read/`,
+  NOTIFICATIONS_MARK_ALL_READ: `${TENANT_API_URL}/notifications/mark_all_read/`,
+  NOTIFICATIONS_DELETE: (id) => `${TENANT_API_URL}/notifications/${id}/`,
+  NOTIFICATIONS_DELETE_READ: `${TENANT_API_URL}/notifications/delete_read/`,
+  NOTIFICATIONS_STATS: `${TENANT_API_URL}/notifications/stats/`,
 
   // Complaints
   COMPLAINTS: `${TENANT_API_URL}/complaints/`,
@@ -103,6 +125,12 @@ export const ENDPOINTS = {
   // History
   HISTORY: `${TENANT_API_URL}/history/`,
   HISTORY_DETAIL: (id) => `${TENANT_API_URL}/history/${id}/`,
+
+  CATEGORIES: `${TENANT_API_URL}/categories/`,
+  CATEGORY_DETAIL: (id) => `${TENANT_API_URL}/categories/${id}/`,
+  CATEGORY_STATS: (id) => `${TENANT_API_URL}/categories/${id}/stats/`,
+  SUBCATEGORIES: `${TENANT_API_URL}/subcategories/`,
+  SUBCATEGORY_DETAIL: (id) => `${TENANT_API_URL}/subcategories/${id}/`,
 };
 
 // Export des URLs pour usage direct

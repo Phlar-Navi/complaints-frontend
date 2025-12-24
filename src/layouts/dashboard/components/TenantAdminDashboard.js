@@ -42,7 +42,7 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
   const navigate = useNavigate();
   const { enqueueSnackbar } = useSnackbar();
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
-
+  const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
   // Extraire les stats réelles
   const actualStats = stats?.stats || stats;
 
@@ -109,10 +109,10 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
       <MDBox display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <MDBox>
           <MDTypography variant="h4" fontWeight="medium">
-            Bonjour {user?.name || "Admin"} 👋
+            Bonjour {userData?.first_name || "Administrateur de tenant"}
           </MDTypography>
           <MDTypography variant="button" color="text">
-            Administration - {user?.tenant?.name || "Tenant"}
+            Catégorie : Administrateur de tenant
           </MDTypography>
         </MDBox>
         <MDBox display="flex" gap={1}>
@@ -171,10 +171,10 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
                 bgcolor="error.main"
                 borderRadius="lg"
               >
-                <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
+                <Icon fontSize="large" sx={{ color: "black", mr: 2 }}>
                   priority_high
                 </Icon>
-                <MDTypography variant="h6" color="white">
+                <MDTypography variant="h6" color="black">
                   {overview.urgent_unhandled} plainte(s) urgente(s) non traitée(s)
                 </MDTypography>
               </MDBox>
@@ -190,10 +190,10 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
                 bgcolor="warning.main"
                 borderRadius="lg"
               >
-                <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
+                <Icon fontSize="large" sx={{ color: "black", mr: 2 }}>
                   assignment_late
                 </Icon>
-                <MDTypography variant="h6" color="white">
+                <MDTypography variant="h6" color="black">
                   {overview.unassigned} plainte(s) non assignée(s)
                 </MDTypography>
               </MDBox>
@@ -212,7 +212,7 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
                 <Icon fontSize="large" sx={{ color: "white", mr: 2 }}>
                   schedule
                 </Icon>
-                <MDTypography variant="h6" color="white">
+                <MDTypography variant="h6" color="black">
                   {overview.overdue} plainte(s) en retard
                 </MDTypography>
               </MDBox>

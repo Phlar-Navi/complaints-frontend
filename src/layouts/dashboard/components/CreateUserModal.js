@@ -120,7 +120,7 @@ function CreateUserModal({ open, onClose, onSuccess, tenantId }) {
         first_name: formData.first_name,
         last_name: formData.last_name,
         role: formData.role,
-        phone_number: formData.phone || null,
+        phone: formData.phone || null,
       };
 
       // Si tenantId est fourni, l'ajouter au payload
