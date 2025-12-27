@@ -74,7 +74,10 @@ axiosClient.interceptors.response.use(
     const originalRequest = error.config;
 
     // Si 401 et pas déjà en train de retry
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    if (
+      error.response?.status === 401 ||
+      (error.response?.status === 403 && !originalRequest._retry)
+    ) {
       originalRequest._retry = true;
 
       console.log("'🔄 Token expiré, tentative de refresh...'");
@@ -89,7 +92,8 @@ axiosClient.interceptors.response.use(
         const { ENDPOINTS } = await import("./endpoints");
 
         // Tenter de refresh le token
-        const response = await axios.post(ENDPOINTS.REFRESH, {
+        const PUBLIC_REFRESH_URL = `${window.location.protocol}//localhost:8000/api/auth/token/refresh/`;
+        const response = await axios.post(PUBLIC_REFRESH_URL, {
           refresh: refreshToken,
         });
 
