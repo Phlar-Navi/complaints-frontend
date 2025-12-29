@@ -2,11 +2,12 @@
 
 import axios from "axios";
 import { TENANT_API_URL } from "./endpoints";
+import { getBackendUrl } from "./endpoints";
 
 // Créer l'instance axios
 const axiosClient = axios.create({
-  //baseURL: TENANT_API_URL,
-  timeout: 10000,
+  //baseURL: "http://kidjamo.app:8000/api",
+  timeout: 20000,
   headers: {
     "Content-Type": "application/json",
   },
@@ -92,7 +93,8 @@ axiosClient.interceptors.response.use(
         const { ENDPOINTS } = await import("./endpoints");
 
         // Tenter de refresh le token
-        const PUBLIC_REFRESH_URL = `${window.location.protocol}//localhost:8000/api/auth/token/refresh/`;
+        const PUBLIC_REFRESH_URL = `${process.env.REACT_APP_BACKEND_BASE_URL}/api/auth/token/refresh/`;
+
         const response = await axios.post(PUBLIC_REFRESH_URL, {
           refresh: refreshToken,
         });

@@ -1,137 +1,231 @@
 // src/api/endpoints.js
+/**
+ * Configuration des endpoints API
+ * ✅ Utilise le tenant depuis localStorage pour construire les URLs dynamiquement
+ * ✅ Plus de dépendance à window.location.hostname (qui retourne localhost)
+ */
 
 import { config } from "./config";
-import { normalizeHostname, getNormalizedHostname } from "../utils/hostname";
+import { normalizeHostname } from "../utils/hostname";
 
 /**
- * Retourne l'URL complète du backend pour un domaine donné
- * NORMALISE automatiquement les underscores en tirets
- *
- * @param {string} hostname - Le hostname (avec ou sans sous-domaine)
- * @returns {string} URL complète du backend
+ * Récupère le tenant depuis localStorage
+ * @returns {Object|null} Objet tenant ou null
  */
-export const getBackendUrl = (hostname) => {
-  const protocol = window.location.protocol; // http: ou https:
-  const backendPort = config.IS_DEVELOPMENT ? ":8000" : ""; // Port 8000 en dev
-
-  // 🔧 CORRECTION: Normaliser le hostname (remplacer _ par -)
-  const normalizedHostname = normalizeHostname(hostname);
-
-  return `${protocol}//${normalizedHostname}${backendPort}/api`;
+const getTenantFromStorage = () => {
+  try {
+    const tenantStr = localStorage.getItem("tenant");
+    console.log("✅ Tenant récupéré depuis localStorage:", tenantStr);
+    return tenantStr ? JSON.parse(tenantStr) : null;
+  } catch (error) {
+    console.error("❌ Erreur parsing tenant depuis localStorage:", error);
+    return null;
+  }
 };
 
 /**
- * Retourne le domaine racine public (sans sous-domaine tenant)
+ * Construit le domaine tenant complet
+ * Ex: commissariat_onzieme → commissariat-onzieme.kidjamo.app
  */
-const getPublicBackendUrl = () => {
-  const hostname = window.location.hostname;
+const getTenantDomain = () => {
+  const tenant = getTenantFromStorage();
+  if (!tenant?.schema_name) return null;
 
-  // Si le hostname contient un point (sous-domaine)
-  if (hostname.includes(".")) {
-    const parts = hostname.split(".");
+  const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
+  return `${normalizedSchema}.kidjamo.app`;
+};
 
-    // Pour localhost avec sous-domaine: tenant.localhost → localhost
-    if (parts[parts.length - 1] === "localhost") {
-      return getBackendUrl("localhost");
-    }
+const getTenantDomain_old = () => {
+  const tenant = getTenantFromStorage();
 
-    // Pour domaines normaux: tenant.example.com → example.com
-    const baseDomain = parts.slice(-2).join(".");
-    return getBackendUrl(baseDomain);
+  if (!tenant || !tenant.schema_name) {
+    console.warn("⚠️ Aucun tenant trouvé dans localStorage");
+    return null;
   }
 
-  // Pas de sous-domaine, on est déjà sur le domaine public
-  return getBackendUrl(hostname);
+  // Normaliser le schema_name (underscore → tiret)
+  const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
+
+  // Construire le domaine complet
+  const baseDomain = "kidjamo.app:";
+  console.log("✅ Base domain depuis config:", baseDomain);
+  const tenantDomain = `${normalizedSchema}.${baseDomain}`;
+  console.log("✅ Domaine tenant construit:", tenantDomain);
+
+  return tenantDomain;
 };
 
 /**
- * Retourne l'URL du backend pour le tenant actuel
- * 🔧 UTILISE le hostname normalisé
+ * Retourne l'URL complète du backend PUBLIC (pour login, création tenant, etc.)
+ * Utilise TOUJOURS le domaine de base depuis .env
  */
-const getTenantBackendUrl = () => {
-  // Utiliser le hostname normalisé au lieu du hostname brut
-  const normalizedHostname = getNormalizedHostname();
-  return getBackendUrl(normalizedHostname);
+export const getPublicBackendUrl = () => {
+  return `${config.BACKEND_BASE_URL}/api`;
 };
 
-// URLs de base
+/**
+ * Retourne l'URL complète du backend TENANT (pour toutes les requêtes tenant)
+ * Construit dynamiquement basé sur le tenant dans localStorage
+ */
+export const getTenantBackendUrl = () => {
+  const tenantDomain = getTenantDomain();
+  if (!tenantDomain) return getPublicBackendUrl();
+
+  return `http://${tenantDomain}:8000/api`;
+};
+
+export const getTenantBackendUrl_old = () => {
+  const tenantDomain = getTenantDomain();
+
+  if (!tenantDomain) {
+    // Fallback : utiliser le domaine public
+    console.warn("⚠️ Impossible de construire URL tenant, utilisation du domaine public");
+    return getPublicBackendUrl();
+  }
+
+  const protocol = config.PROTOCOL;
+  const port = 8000;
+
+  return `${protocol}//${tenantDomain}${port}/api`;
+};
+
+/**
+ * Retourne l'URL du backend en fonction du contexte
+ * (Public ou Tenant selon ce qui est stocké)
+ */
+export const getBackendUrl = () => {
+  const tenant = getTenantFromStorage();
+
+  // Si on a un tenant, utiliser son URL
+  if (tenant && tenant.schema_name) {
+    return getTenantBackendUrl();
+  }
+
+  // Sinon, utiliser le domaine public
+  return getPublicBackendUrl();
+};
+
+// =========================================================================
+// URLs de base - Calculées dynamiquement
+// =========================================================================
+
 const PUBLIC_API_URL = getPublicBackendUrl();
+
+// ⚠️ ATTENTION : TENANT_API_URL est calculé au chargement du module
+// Il faut le recalculer après le login pour avoir le bon tenant
+// Utilisez getTenantBackendUrl() dans vos composants si nécessaire
+
 const TENANT_API_URL = getTenantBackendUrl();
 
-// Log pour debug (à retirer en production)
-if (config.IS_DEVELOPMENT) {
-  console.log("🔧 API Configuration:");
-  console.log("  Frontend URL:", window.location.origin);
-  console.log("  Hostname (brut):", window.location.hostname);
-  console.log("  Hostname (normalisé):", getNormalizedHostname());
-  console.log("  Public API URL:", PUBLIC_API_URL);
-  console.log("  Tenant API URL:", TENANT_API_URL);
-}
+// =========================================================================
+// Fonction helper pour reconstruire les endpoints après login
+// =========================================================================
 
-export const ENDPOINTS = {
-  // === ENDPOINTS PUBLICS (pas de tenant requis) ===
-  LOGIN: `${PUBLIC_API_URL}/auth/login/`,
-  SMART_LOGIN: `${PUBLIC_API_URL}/auth/smart-login/`,
-  REFRESH: `${PUBLIC_API_URL}/auth/token/refresh/`,
-  TENANT_CREATE: `${PUBLIC_API_URL}/tenants/create/`,
-  TENANTS: `${PUBLIC_API_URL}/tenants/`,
-  TENANT_SPECIFIC: (id) => `${PUBLIC_API_URL}/tenants/${id}/`,
-  TENANT_ACTIVATE: (id) => `${PUBLIC_API_URL}/tenants/${id}/toggle_active/`,
-  TENANT_USERS: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/users/`,
-  TENANT_STATS: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/stats/`,
-  TENANT_ADD_DOMAIN: (tenantId) => `${PUBLIC_API_URL}/tenants/${tenantId}/add_domain/`,
-  TENANTS_GLOBAL_STATS: `${PUBLIC_API_URL}/tenants/global-stats/`,
+/**
+ * Reconstruit tous les endpoints après changement de tenant
+ * À appeler après un login réussi
+ */
+export const refreshEndpoints = () => {
+  const newTenantUrl = getTenantBackendUrl();
+
+  console.log("🔄 Refresh des endpoints avec nouveau tenant");
+  console.log("  Nouvelle URL tenant:", newTenantUrl);
+
+  // Retourner les nouveaux endpoints
+  return buildEndpoints(newTenantUrl);
+};
+
+/**
+ * Construit l'objet ENDPOINTS avec une URL tenant spécifique
+ */
+const buildEndpoints = (tenantApiUrl = TENANT_API_URL) => ({
+  // === ENDPOINTS PUBLICS (domaine principal) ===
+  LOGIN: `http://16.16.202.86:8000/api/auth/login/`,
+  REFRESH: `http://16.16.202.86:8000/api/auth/token/refresh/`,
+  TENANT_CREATE: `http://16.16.202.86:8000/api/tenants/create/`,
+  TENANTS: `http://16.16.202.86:8000/api/tenants/`,
 
   // === ENDPOINTS TENANT-SPÉCIFIQUES ===
-  LOGOUT: `${TENANT_API_URL}/auth/logout/`,
-  ME: `${TENANT_API_URL}/auth/me/`,
-  CHANGE_PASSWORD: `${TENANT_API_URL}/auth/change-password/`,
+  // Utilisent l'URL tenant dynamique
+  TENANT_SPECIFIC: (id) => `${tenantApiUrl}/tenants/${id}/`,
+  TENANT_ACTIVATE: (id) => `${tenantApiUrl}/tenants/${id}/toggle_active/`,
+  TENANT_USERS: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/users/`,
+  TENANT_STATS: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/stats/`,
+  TENANT_ADD_DOMAIN: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/add_domain/`,
+  TENANTS_GLOBAL_STATS: `http://16.16.202.86:8000/api/tenants/global-stats/`,
+
+  // Auth
+  LOGOUT: `${tenantApiUrl}/auth/logout/`,
+  ME: `${tenantApiUrl}/auth/me/`,
+  CHANGE_PASSWORD: `${tenantApiUrl}/auth/change-password/`,
 
   // Users
-  USERS: `${TENANT_API_URL}/users/`,
-  USER_CREATE: `${TENANT_API_URL}/users/create/`,
-  USER_DETAIL: (id) => `${TENANT_API_URL}/users/${id}/`,
+  USERS: `${tenantApiUrl}/users/`,
+  USER_CREATE: `${tenantApiUrl}/users/create/`,
+  USER_DETAIL: (id) => `${tenantApiUrl}/users/${id}/`,
+  UPDATE_PROFILE: `${tenantApiUrl}/users/profile/`,
+  UPLOAD_AVATAR: `${tenantApiUrl}/users/profile/avatar/`,
+  CHANGE_PASSWORD_SELF: `${tenantApiUrl}/users/profile/password/`,
+  PREFERENCES: `${tenantApiUrl}/users/preferences/`,
+  UPDATE_PREFERENCES: `${tenantApiUrl}/users/preferences/`,
 
-  UPDATE_PROFILE: `${TENANT_API_URL}/users/profile/`,
-  UPLOAD_AVATAR: `${TENANT_API_URL}/users/profile/avatar/`,
-  CHANGE_PASSWORD_SELF: `${TENANT_API_URL}/users/profile/password/`,
-  PREFERENCES: `${TENANT_API_URL}/users/preferences/`,
-  UPDATE_PREFERENCES: `${TENANT_API_URL}/users/preferences/`,
-
-  NOTIFICATIONS: `${TENANT_API_URL}/notifications/`,
-  NOTIFICATION_UNREAD: `${TENANT_API_URL}/notifications/unread/`,
-  NOTIFICATIONS_COUNT_UNREAD: `${TENANT_API_URL}/notifications/count_unread/`,
-  NOTIFICATIONS_MARK_READ: (id) => `${TENANT_API_URL}/notifications/${id}/mark_read/`,
-  NOTIFICATIONS_MARK_ALL_READ: `${TENANT_API_URL}/notifications/mark_all_read/`,
-  NOTIFICATIONS_DELETE: (id) => `${TENANT_API_URL}/notifications/${id}/`,
-  NOTIFICATIONS_DELETE_READ: `${TENANT_API_URL}/notifications/delete_read/`,
-  NOTIFICATIONS_STATS: `${TENANT_API_URL}/notifications/stats/`,
+  // Notifications
+  NOTIFICATIONS: `${tenantApiUrl}/notifications/`,
+  NOTIFICATION_UNREAD: `${tenantApiUrl}/notifications/unread/`,
+  NOTIFICATIONS_COUNT_UNREAD: `${tenantApiUrl}/notifications/count_unread/`,
+  NOTIFICATIONS_MARK_READ: (id) => `${tenantApiUrl}/notifications/${id}/mark_read/`,
+  NOTIFICATIONS_MARK_ALL_READ: `${tenantApiUrl}/notifications/mark_all_read/`,
+  NOTIFICATIONS_DELETE: (id) => `${tenantApiUrl}/notifications/${id}/`,
+  NOTIFICATIONS_DELETE_READ: `${tenantApiUrl}/notifications/delete_read/`,
+  NOTIFICATIONS_STATS: `${tenantApiUrl}/notifications/stats/`,
 
   // Complaints
-  COMPLAINTS: `${TENANT_API_URL}/complaints/`,
-  COMPLAINT_DETAIL: (id) => `${TENANT_API_URL}/complaints/${id}/`,
-  COMPLAINT_ASSIGN: (id) => `${TENANT_API_URL}/complaints/${id}/assign/`,
-  COMPLAINT_COMMENT: (id) => `${TENANT_API_URL}/complaints/${id}/add_comment/`,
-  COMPLAINT_ATTACHMENT: (id) => `${TENANT_API_URL}/complaints/${id}/add_attachment/`,
-  COMPLAINT_HISTORY: (id) => `${TENANT_API_URL}/complaints/${id}/history/`,
+  COMPLAINTS: `${tenantApiUrl}/complaints/`,
+  COMPLAINT_DETAIL: (id) => `${tenantApiUrl}/complaints/${id}/`,
+  COMPLAINT_ASSIGN: (id) => `${tenantApiUrl}/complaints/${id}/assign/`,
+  COMPLAINT_COMMENT: (id) => `${tenantApiUrl}/complaints/${id}/add_comment/`,
+  COMPLAINT_ATTACHMENT: (id) => `${tenantApiUrl}/complaints/${id}/add_attachment/`,
+  COMPLAINT_HISTORY: (id) => `${tenantApiUrl}/complaints/${id}/history/`,
 
   // Dashboard
-  DASHBOARD: `${TENANT_API_URL}/dashboard/`,
+  TENANT_DASHBOARD: `http://16.16.202.86:8000/api/dashboard/`,
+  DASHBOARD: `${tenantApiUrl}/dashboard/`,
 
   // SLA Configs
-  SLA_CONFIGS: `${TENANT_API_URL}/sla-configs/`,
-  SLA_CONFIG_DETAIL: (id) => `${TENANT_API_URL}/sla-configs/${id}/`,
+  SLA_CONFIGS: `${tenantApiUrl}/sla-configs/`,
+  SLA_CONFIG_DETAIL: (id) => `${tenantApiUrl}/sla-configs/${id}/`,
 
   // History
-  HISTORY: `${TENANT_API_URL}/history/`,
-  HISTORY_DETAIL: (id) => `${TENANT_API_URL}/history/${id}/`,
+  HISTORY: `${tenantApiUrl}/history/`,
+  HISTORY_DETAIL: (id) => `${tenantApiUrl}/history/${id}/`,
 
-  CATEGORIES: `${TENANT_API_URL}/categories/`,
-  CATEGORY_DETAIL: (id) => `${TENANT_API_URL}/categories/${id}/`,
-  CATEGORY_STATS: (id) => `${TENANT_API_URL}/categories/${id}/stats/`,
-  SUBCATEGORIES: `${TENANT_API_URL}/subcategories/`,
-  SUBCATEGORY_DETAIL: (id) => `${TENANT_API_URL}/subcategories/${id}/`,
-};
+  // Categories
+  CATEGORIES: `${tenantApiUrl}/categories/`,
+  CATEGORY_DETAIL: (id) => `${tenantApiUrl}/categories/${id}/`,
+  CATEGORY_STATS: (id) => `${tenantApiUrl}/categories/${id}/stats/`,
+  SUBCATEGORIES: `${tenantApiUrl}/subcategories/`,
+  SUBCATEGORY_DETAIL: (id) => `${tenantApiUrl}/subcategories/${id}/`,
+});
+
+// Construire les endpoints initiaux
+export const ENDPOINTS = buildEndpoints();
+
+// Log pour debug (seulement en dev)
+if (config.IS_DEVELOPMENT) {
+  const tenant = getTenantFromStorage();
+  console.log("🔧 API Endpoints Configuration:");
+  console.log("  Base Domain:", config.BASE_DOMAIN);
+  console.log("  Backend Base URL:", config.BACKEND_BASE_URL);
+  console.log("  Tenant actuel:", tenant?.name || "(aucun)");
+  console.log("  Tenant schema:", tenant?.schema_name || "(aucun)");
+  console.log("  Tenant domain:", getTenantDomain() || "(aucun)");
+  console.log("  PUBLIC_API_URL:", PUBLIC_API_URL);
+  console.log("  TENANT_API_URL:", getTenantBackendUrl());
+  console.log("  ---");
+  console.log("  Exemple LOGIN:", ENDPOINTS.LOGIN);
+  console.log("  Exemple DASHBOARD:", ENDPOINTS.DASHBOARD);
+  console.log("  Exemple ME:", ENDPOINTS.ME);
+}
 
 // Export des URLs pour usage direct
 export { PUBLIC_API_URL, TENANT_API_URL };

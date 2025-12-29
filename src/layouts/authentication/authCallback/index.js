@@ -12,6 +12,7 @@ import BasicLayout from "layouts/authentication/components/BasicLayout";
 
 // Images
 import bgImage from "assets/images/bg-sign-in-basic.jpeg";
+import axiosClient from "api/axiosClient";
 
 /**
  * Page de callback après login cross-domain

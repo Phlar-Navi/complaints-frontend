@@ -54,6 +54,7 @@ import UsersManagement from "layouts/users/UsersManagement";
 import TenantsManagement from "layouts/tenants/index";
 // @mui icons
 import Icon from "@mui/material/Icon";
+import SuperAdminDashboard from "layouts/dashboard/components/SuperAdminDashboard";
 
 const rawUser = localStorage.getItem("user");
 const userData = rawUser ? JSON.parse(rawUser) : null;
@@ -70,7 +71,7 @@ const routes = [
     key: "dashboard",
     icon: <Icon fontSize="small">dashboard</Icon>,
     route: "/dashboard",
-    component: <RoleBasedDashboard />,
+    component: isSuperAdmin ? <SuperAdminDashboard /> : <RoleBasedDashboard />,
   },
   ...(isSuperAdmin
     ? [

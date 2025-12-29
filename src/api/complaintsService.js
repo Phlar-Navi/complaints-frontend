@@ -3,6 +3,9 @@
 import axiosClient from "./axiosClient";
 import { ENDPOINTS } from "./endpoints";
 
+const rawUser = localStorage.getItem("user");
+const userData = rawUser ? JSON.parse(rawUser) : null;
+const isSuperAdmin = userData?.role === "SUPER_ADMIN";
 const BASE_URL = "/api";
 
 // ==================== COMPLAINTS CRUD ====================

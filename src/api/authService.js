@@ -75,6 +75,8 @@ export const login = async (email, password) => {
     });
 
     const { access, refresh, user, tenant } = response.data;
+    console.log("Réponse recue: ", response.data);
+    localStorage.setItem("login_response", JSON.stringify(response.data));
 
     console.log("✅ Login réussi:", {
       user: user.email,
@@ -172,6 +174,7 @@ export const handleAuthCallback = () => {
 
     if (tenant) {
       localStorage.setItem("tenant", JSON.stringify(tenant));
+      console.log("   Tenant stocké:", tenant.name);
     }
 
     console.log("💾 Tokens stockés sur le nouveau domaine");

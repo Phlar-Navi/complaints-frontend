@@ -80,7 +80,7 @@ function SuperAdminDashboard({ onRefresh }) {
   }));
 
   return (
-    <MDBox>
+    <MDBox py={3}>
       {/* Statistiques principales */}
       <Grid container spacing={3}>
         <Grid item xs={12} md={6} lg={3}>
