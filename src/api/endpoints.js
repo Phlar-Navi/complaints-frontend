@@ -32,7 +32,7 @@ const getTenantDomain = () => {
   if (!tenant?.schema_name) return null;
 
   const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
-  return `${normalizedSchema}.kidjamo.app`;
+  return `${normalizedSchema}.complaints.kidjamo.app`;
 };
 
 const getTenantDomain_old = () => {

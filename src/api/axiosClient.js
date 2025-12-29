@@ -6,7 +6,7 @@ import { getBackendUrl } from "./endpoints";
 
 // Créer l'instance axios
 const axiosClient = axios.create({
-  //baseURL: "http://kidjamo.app:8000/api",
+  baseURL: "https://complaints.kidjamo.app:8000/api",
   timeout: 20000,
   headers: {
     "Content-Type": "application/json",
