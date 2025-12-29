@@ -26,7 +26,7 @@ import { useNavigate } from "react-router-dom";
 
 // API
 import { createComplaint, URGENCY_LABELS } from "api/complaintsService";
-// import { getCategories } from "api/categoriesService"; // À créer si nécessaire
+import { getCategories } from "api/categoriesService"; // À créer si nécessaire
 
 function CreateComplaint() {
   const navigate = useNavigate();
@@ -47,14 +47,14 @@ function CreateComplaint() {
 
   // Charger les catégories au montage (si disponible)
   useEffect(() => {
-    // fetchCategories();
+    getCategories();
     // Pour l'instant, on peut utiliser des catégories en dur
-    setCategories([
-      { id: "1", name: "Violence" },
-      { id: "2", name: "Vol" },
-      { id: "3", name: "Vandalisme" },
-      { id: "4", name: "Autre" },
-    ]);
+    //setCategories([
+    //{ id: "1", name: "Violence" },
+    //{ id: "2", name: "Vol" },
+    //{ id: "3", name: "Vandalisme" },
+    //{ id: "4", name: "Autre" },
+    //]);
   }, []);
 
   const handleChange = (field) => (event) => {

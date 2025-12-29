@@ -108,20 +108,22 @@ function TenantsManagement() {
     ),
     actions: (
       <MDBox display="flex" gap={1}>
-        <Tooltip title="Voir détails">
-          <IconButton size="small" color="info" onClick={() => navigate(`/tenants/${tenant.id}`)}>
-            <Icon>visibility</Icon>
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Modifier">
-          <IconButton
-            size="small"
-            color="warning"
-            onClick={() => navigate(`/tenants/${tenant.id}/edit`)}
-          >
-            <Icon>edit</Icon>
-          </IconButton>
-        </Tooltip>
+        {/*
+          <Tooltip title="Voir détails">
+            <IconButton size="small" color="info" onClick={() => navigate(`/tenants/${tenant.id}`)}>
+              <Icon>visibility</Icon>
+            </IconButton>
+          </Tooltip>
+          <Tooltip title="Modifier">
+            <IconButton
+              size="small"
+              color="warning"
+              onClick={() => navigate(`/tenants/${tenant.id}/edit`)}
+            >
+              <Icon>edit</Icon>
+            </IconButton>
+          </Tooltip>
+        */}
         <Tooltip title="Supprimer">
           <IconButton
             size="small"

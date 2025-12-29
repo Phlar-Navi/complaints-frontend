@@ -43,8 +43,8 @@ import rtlPlugin from "stylis-plugin-rtl";
 import { CacheProvider } from "@emotion/react";
 import createCache from "@emotion/cache";
 
-// Material Dashboard 2 React routes
-import routes from "routes";
+// Material Dashboard 2 React routes - maintenant une fonction
+import getRoutesConfig from "routes";
 
 // Material Dashboard 2 React contexts
 import { useMaterialUIController, setMiniSidenav, setOpenConfigurator } from "context";
@@ -69,7 +69,14 @@ export default function App() {
   } = controller;
   const [onMouseEnter, setOnMouseEnter] = useState(false);
   const [rtlCache, setRtlCache] = useState(null);
+  const [routesKey, setRoutesKey] = useState(0);
   const { pathname } = useLocation();
+
+  // Obtenir les routes dynamiquement en fonction du rôle actuel
+  const routes = useMemo(() => {
+    console.log("🔄 Recalcul des routes - Key:", routesKey);
+    return getRoutesConfig();
+  }, [routesKey]);
 
   // Cache for the rtl
   useMemo(() => {
@@ -79,6 +86,29 @@ export default function App() {
     });
 
     setRtlCache(cacheRtl);
+  }, []);
+
+  // Écouter les changements de l'utilisateur pour recalculer les routes
+  useEffect(() => {
+    const handleUserChange = () => {
+      console.log("👤 Changement utilisateur détecté, recalcul des routes");
+      setRoutesKey((prev) => prev + 1);
+    };
+
+    // Écouter l'événement personnalisé
+    window.addEventListener("userChanged", handleUserChange);
+
+    // Écouter les changements du localStorage (si ouvert dans plusieurs onglets)
+    window.addEventListener("storage", (e) => {
+      if (e.key === "user") {
+        handleUserChange();
+      }
+    });
+
+    return () => {
+      window.removeEventListener("userChanged", handleUserChange);
+      window.removeEventListener("storage", handleUserChange);
+    };
   }, []);
 
   // Open sidenav when mouse enter on mini sidenav

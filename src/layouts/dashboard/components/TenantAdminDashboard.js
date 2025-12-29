@@ -15,6 +15,7 @@ import CreateUserModal from "./CreateUserModal";
 import { useNavigate } from "react-router-dom";
 import { useSnackbar } from "notistack";
 import PropTypes from "prop-types";
+import CategoryManagementModal from "./CategoryManagement";
 
 TenantAdminDashboard.propTypes = {
   stats: PropTypes.shape({
@@ -43,6 +44,7 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
   const { enqueueSnackbar } = useSnackbar();
   const [createUserModalOpen, setCreateUserModalOpen] = useState(false);
   const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false);
   // Extraire les stats réelles
   const actualStats = stats?.stats || stats;
 
@@ -103,6 +105,12 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
     }
   };
 
+  // 🆕 Fonction pour rafraîchir après modification des catégories
+  const handleCategoryRefresh = () => {
+    fetchStats();
+    if (onRefresh) onRefresh();
+  };
+
   return (
     <MDBox>
       {/* Header */}
@@ -131,6 +139,10 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
           >
             <Icon sx={{ mr: 1 }}>add</Icon>
             Nouvelle plainte
+          </MDButton>
+          <MDButton variant="gradient" color="info" onClick={() => setCategoryModalOpen(true)}>
+            <Icon sx={{ mr: 1 }}>category</Icon>
+            Gérer les Catégories
           </MDButton>
         </MDBox>
       </MDBox>
@@ -361,6 +373,13 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
         onClose={() => setCreateUserModalOpen(false)}
         onSuccess={handleCreateUserSuccess}
         tenantId={user?.tenant?.id}
+      />
+
+      {/* 🆕 Modale de gestion des catégories */}
+      <CategoryManagementModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onRefresh={handleCategoryRefresh}
       />
     </MDBox>
   );

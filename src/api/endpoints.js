@@ -148,7 +148,7 @@ const buildEndpoints = (tenantApiUrl = TENANT_API_URL) => ({
   // === ENDPOINTS TENANT-SPÉCIFIQUES ===
   // Utilisent l'URL tenant dynamique
   TENANT_SPECIFIC: (id) => `${tenantApiUrl}/tenants/${id}/`,
-  TENANT_ACTIVATE: (id) => `${tenantApiUrl}/tenants/${id}/toggle_active/`,
+  TENANT_ACTIVATE: (id) => `http://16.16.202.86:8000/api/tenants/${id}/toggle_active/`,
   TENANT_USERS: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/users/`,
   TENANT_STATS: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/stats/`,
   TENANT_ADD_DOMAIN: (tenantId) => `${tenantApiUrl}/tenants/${tenantId}/add_domain/`,

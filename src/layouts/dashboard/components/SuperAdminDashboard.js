@@ -5,6 +5,7 @@ import { useState, useEffect } from "react";
 
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
+import MDButton from "components/MDButton";
 import ComplexStatisticsCard from "examples/Cards/StatisticsCards/ComplexStatisticsCard";
 import DataTable from "examples/Tables/DataTable";
 import DashboardLayout from "examples/LayoutContainers/DashboardLayout";
@@ -12,6 +13,7 @@ import DashboardNavbar from "examples/Navbars/DashboardNavbar";
 import Footer from "examples/Footer";
 
 import { getGlobalStats } from "api/tenantsService";
+import CategoryManagementModal from "./CategoryManagement";
 import PropTypes from "prop-types";
 
 SuperAdminDashboard.propTypes = {
@@ -21,6 +23,7 @@ SuperAdminDashboard.propTypes = {
 function SuperAdminDashboard({ onRefresh }) {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [categoryModalOpen, setCategoryModalOpen] = useState(false); // 🆕 État pour la modale
 
   useEffect(() => {
     fetchStats();
@@ -36,6 +39,12 @@ function SuperAdminDashboard({ onRefresh }) {
     } finally {
       setLoading(false);
     }
+  };
+
+  // 🆕 Fonction pour rafraîchir après modification des catégories
+  const handleCategoryRefresh = () => {
+    fetchStats();
+    if (onRefresh) onRefresh();
   };
 
   if (loading || !stats) {
@@ -88,6 +97,13 @@ function SuperAdminDashboard({ onRefresh }) {
     <DashboardLayout>
       <DashboardNavbar />
       <MDBox py={3}>
+        {/* 🆕 Bouton de gestion des catégories - En haut */}
+        <MDBox mb={3} display="flex" justifyContent="space-between" alignItems="center">
+          <MDTypography variant="h4" fontWeight="medium">
+            Tableau de bord SuperAdmin
+          </MDTypography>
+        </MDBox>
+
         {/* Statistiques principales */}
         <Grid container spacing={3}>
           <Grid item xs={12} md={6} lg={3}>
@@ -287,6 +303,13 @@ function SuperAdminDashboard({ onRefresh }) {
         )}
       </MDBox>
       <Footer />
+
+      {/* 🆕 Modale de gestion des catégories */}
+      <CategoryManagementModal
+        open={categoryModalOpen}
+        onClose={() => setCategoryModalOpen(false)}
+        onRefresh={handleCategoryRefresh}
+      />
     </DashboardLayout>
   );
 }

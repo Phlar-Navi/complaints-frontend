@@ -130,6 +130,10 @@ export const login = async (email, password) => {
 
     console.log("💾 Tokens stockés localement");
 
+    // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
+    console.log("🔔 Dispatch userChanged event");
+    window.dispatchEvent(new Event("userChanged"));
+
     return response.data;
   } catch (error) {
     console.error("❌ Erreur login:", error.response?.data || error.message);
@@ -142,6 +146,179 @@ export const login = async (email, password) => {
  * À appeler dans une page /auth-callback
  */
 export const handleAuthCallback = () => {
+  const params = new URLSearchParams(window.location.search);
+  const token = params.get("token");
+  const refresh = params.get("refresh");
+  const userEncoded = params.get("user");
+  const tenantEncoded = params.get("tenant");
+  const redirectPath = params.get("redirect") || "/dashboard";
+
+  if (!token || !refresh || !userEncoded) {
+    console.error("❌ Tokens manquants dans l'URL");
+    window.location.href = "/authentication/sign-in";
+    return false;
+  }
+
+  try {
+    // Décoder les données
+    const accessToken = atob(token);
+    const refreshToken = atob(refresh);
+    const user = JSON.parse(atob(userEncoded));
+    const tenant = tenantEncoded ? JSON.parse(atob(tenantEncoded)) : null;
+
+    console.log("✅ Tokens reçus depuis URL");
+    console.log("   User:", user.email);
+    console.log("   Tenant:", tenant?.name);
+
+    // Nettoyer et stocker dans le localStorage du nouveau domaine
+    localStorage.clear();
+    localStorage.setItem("access_token", accessToken);
+    localStorage.setItem("refresh_token", refreshToken);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    if (tenant) {
+      localStorage.setItem("tenant", JSON.stringify(tenant));
+      console.log("   Tenant stocké:", tenant.name);
+    }
+
+    console.log("💾 Tokens stockés sur le nouveau domaine");
+
+    // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
+    console.log("🔔 Dispatch userChanged event");
+    window.dispatchEvent(new Event("userChanged"));
+
+    // Nettoyer l'URL (enlever les tokens visibles)
+    window.history.replaceState({}, document.title, redirectPath);
+
+    // 🔄 Utiliser window.location.href pour forcer le rechargement avec les nouvelles routes
+    // Ceci garantit que les routes sont recalculées avec les bonnes données utilisateur
+    window.location.href = redirectPath;
+
+    return true;
+  } catch (error) {
+    console.error("❌ Erreur décodage tokens:", error);
+    window.location.href = "/authentication/sign-in";
+    return false;
+  }
+};
+
+/**
+ * Déconnexion utilisateur
+ */
+export const logout = async () => {
+  try {
+    console.log("🚪 Déconnexion...");
+
+    // Appeler l'API de logout si nécessaire
+    try {
+      await axiosClient.post(ENDPOINTS.LOGOUT);
+    } catch (error) {
+      console.warn("⚠️ Erreur lors du logout API:", error);
+      // Continue quand même la déconnexion locale
+    }
+
+    // Nettoyer le localStorage
+    localStorage.clear();
+    console.log("💾 LocalStorage nettoyé");
+
+    // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
+    console.log("🔔 Dispatch userChanged event");
+    window.dispatchEvent(new Event("userChanged"));
+
+    // Rediriger vers la page de connexion
+    window.location.href = "/authentication/sign-in";
+  } catch (error) {
+    console.error("❌ Erreur logout:", error);
+    // Force la déconnexion même en cas d'erreur
+    localStorage.clear();
+    window.dispatchEvent(new Event("userChanged"));
+    window.location.href = "/authentication/sign-in";
+  }
+};
+
+/**
+ * Connexion utilisateur
+ */
+export const login_old = async (email, password) => {
+  try {
+    console.log("🔐 Login depuis:", window.location.hostname);
+    console.log("   Email:", email);
+
+    // Appel API (ne pas nettoyer localStorage avant, on peut en avoir besoin)
+    const response = await axiosClient.post(ENDPOINTS.LOGIN, {
+      email,
+      password,
+    });
+
+    const { access, refresh, user, tenant } = response.data;
+    console.log("Réponse recue: ", response.data);
+    localStorage.setItem("login_response", JSON.stringify(response.data));
+
+    console.log("✅ Login réussi:", {
+      user: user.email,
+      role: user.role,
+      tenant: tenant?.name,
+      tenantSchema: tenant?.schema_name,
+    });
+
+    // Si on est sur le domaine public ET que l'utilisateur a un tenant
+    if (isOnPublicDomain() && tenant && tenant.schema_name) {
+      const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
+
+      console.log("🔄 Redirection cross-domain détectée");
+      console.log("   De: localhost");
+      console.log("   Vers:", `${normalizedSchema}.localhost`);
+
+      // 🔧 SOLUTION : Passer les tokens et user dans l'URL (temporairement)
+      const redirectUrl = buildTenantUrl(
+        normalizedSchema,
+        "/auth-callback", // ← Page spéciale qui va récupérer les tokens
+        {
+          // Encoder les données en base64 pour sécurité
+          token: btoa(access),
+          refresh: btoa(refresh),
+          user: btoa(JSON.stringify(user)),
+          tenant: btoa(JSON.stringify(tenant)),
+          redirect: "/dashboard", // Où aller après
+        }
+      );
+
+      console.log("🔄 Redirection vers:", redirectUrl);
+
+      window.dispatchEvent(new Event("userChanged"));
+      // Redirection immédiate
+      window.location.href = redirectUrl;
+
+      return response.data;
+    }
+
+    // Sinon, on est déjà sur le bon domaine : stocker normalement
+    console.log("✓ Même domaine, stockage local");
+
+    // Nettoyer puis stocker
+    localStorage.clear();
+    localStorage.setItem("access_token", access);
+    localStorage.setItem("refresh_token", refresh);
+    localStorage.setItem("user", JSON.stringify(user));
+
+    if (tenant) {
+      localStorage.setItem("tenant", JSON.stringify(tenant));
+    }
+
+    console.log("💾 Tokens stockés localement");
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Erreur login:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+/**
+ * Gère la réception des tokens après redirection cross-domain
+ * À appeler dans une page /auth-callback
+ */
+export const handleAuthCallback_old = () => {
   const params = new URLSearchParams(window.location.search);
   const token = params.get("token");
   const refresh = params.get("refresh");
@@ -196,7 +373,7 @@ export const handleAuthCallback = () => {
 /**
  * Déconnexion
  */
-export const logout = () => {
+export const logout_old = () => {
   console.log("'👋 Logout...'");
   // Nettoyer complètement le localStorage
   localStorage.clear();
@@ -207,6 +384,7 @@ export const logout = () => {
   // Important : garder exactement le chemin legacy
   window.location.href = `${protocol}//localhost:3000/authentication/sign-in`;
 };
+
 export const logout_buggy = async () => {
   try {
     console.log("👋 Logout...");
