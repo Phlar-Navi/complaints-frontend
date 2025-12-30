@@ -63,7 +63,88 @@ const isOnTenantDomain = (tenantSchemaName) => {
 /**
  * Connexion utilisateur
  */
+// src/api/authService.js
+
 export const login = async (email, password) => {
+  try {
+    console.log("🔐 Login depuis:", window.location.hostname);
+    console.log("   Email:", email);
+
+    const response = await axiosClient.post(ENDPOINTS.LOGIN, {
+      email,
+      password,
+    });
+
+    const { access, refresh, user, tenant } = response.data;
+    console.log("✅ Login réussi:", {
+      user: user.email,
+      role: user.role,
+      tenant: tenant?.name,
+      tenantSchema: tenant?.schema_name,
+    });
+
+    // 🔥 CAS 1 : SUPER_ADMIN (pas de tenant, reste sur domaine public)
+    if (user.role === "SUPER_ADMIN" || !tenant) {
+      console.log("👑 Super Admin détecté, stockage sur domaine public");
+
+      localStorage.clear();
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      localStorage.setItem("user", JSON.stringify(user));
+
+      window.dispatchEvent(new Event("userChanged"));
+
+      // Forcer le rechargement pour reconstruire les routes
+      window.location.href = "/dashboard";
+      return response.data;
+    }
+
+    // 🔥 CAS 2 : Utilisateur avec tenant
+    const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
+    const currentHostname = window.location.hostname;
+    const expectedHostname = `${normalizedSchema}.complaints.kidjamo.app`;
+
+    // Si on est déjà sur le bon sous-domaine
+    if (currentHostname === expectedHostname) {
+      console.log("✓ Déjà sur le bon domaine tenant");
+
+      localStorage.clear();
+      localStorage.setItem("access_token", access);
+      localStorage.setItem("refresh_token", refresh);
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("tenant", JSON.stringify(tenant));
+
+      window.dispatchEvent(new Event("userChanged"));
+
+      // Forcer le rechargement
+      window.location.href = "/dashboard";
+      return response.data;
+    }
+
+    // Sinon, redirection cross-domain nécessaire
+    console.log("🔄 Redirection cross-domain");
+    console.log("   De:", currentHostname);
+    console.log("   Vers:", expectedHostname);
+
+    const redirectUrl = buildTenantUrl(normalizedSchema, "/auth-callback", {
+      token: btoa(access),
+      refresh: btoa(refresh),
+      user: btoa(JSON.stringify(user)),
+      tenant: btoa(JSON.stringify(tenant)),
+      redirect: "/dashboard",
+    });
+
+    console.log("🔄 Redirection vers:", redirectUrl);
+    window.location.href = redirectUrl;
+
+    return response.data;
+  } catch (error) {
+    console.error("❌ Erreur login:", error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const login_flawfull = async (email, password) => {
   try {
     console.log("🔐 Login depuis:", window.location.hostname);
     console.log("   Email:", email);
@@ -205,7 +286,42 @@ export const handleAuthCallback = () => {
 /**
  * Déconnexion utilisateur
  */
+// src/api/authService.js
+
 export const logout = async () => {
+  try {
+    console.log("🚪 Déconnexion...");
+
+    try {
+      await axiosClient.post(ENDPOINTS.LOGOUT);
+    } catch (error) {
+      console.warn("⚠️ Erreur lors du logout API:", error);
+    }
+
+    // Nettoyer le localStorage
+    localStorage.clear();
+    console.log("💾 LocalStorage nettoyé");
+
+    // 🔥 IMPORTANT : Rediriger vers le domaine PUBLIC (sans sous-domaine)
+    const protocol = window.location.protocol;
+    const publicDomain = "frontend.complaints.kidjamo.app";
+    const port = window.location.hostname === "localhost" ? ":3000" : "";
+
+    // Rediriger vers le domaine public pour le login
+    window.location.href = `${protocol}//${publicDomain}${port}/authentication/sign-in`;
+  } catch (error) {
+    console.error("❌ Erreur logout:", error);
+    localStorage.clear();
+
+    // Même en cas d'erreur, forcer la redirection
+    const protocol = window.location.protocol;
+    const publicDomain = "frontend.complaints.kidjamo.app";
+    const port = window.location.hostname === "localhost" ? ":3000" : "";
+    window.location.href = `${protocol}//${publicDomain}${port}/authentication/sign-in`;
+  }
+};
+
+export const logout_not_redirecting = async () => {
   try {
     console.log("🚪 Déconnexion...");
 
@@ -224,6 +340,12 @@ export const logout = async () => {
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
     console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
+
+    // 🔥 FORCER un vrai rechargement pour reconstruire axiosClient
+    setTimeout(() => {
+      console.log("Rechargement FORCE!");
+      window.location.reload();
+    }, 100);
 
     // Rediriger vers la page de connexion
     window.location.href = "/authentication/sign-in";
