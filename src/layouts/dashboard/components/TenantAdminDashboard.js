@@ -49,26 +49,6 @@ export function TenantAdminDashboard({ stats, user, onRefresh }) {
   // Extraire les stats réelles
   const actualStats = stats?.stats || stats;
 
-  useEffect(() => {
-    // Vérifier si on a déjà refresh
-    const hasRefreshed = localStorage.getItem("dashboard_refreshed");
-
-    if (!hasRefreshed) {
-      // Marquer qu'on va refresh
-      localStorage.setItem("dashboard_refreshed", "true");
-
-      // Refresh
-      window.location.reload();
-    }
-  }, []);
-
-  // 🔥 Nettoyer le flag quand on quitte le composant
-  useEffect(() => {
-    return () => {
-      localStorage.removeItem("dashboard_refreshed");
-    };
-  }, []);
-
   if (!actualStats?.overview) {
     return (
       <MDBox textAlign="center" py={3}>

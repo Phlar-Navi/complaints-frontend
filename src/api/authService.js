@@ -259,13 +259,13 @@ export const logout = async () => {
     window.dispatchEvent(new Event("userChanged"));
 
     // Rediriger vers la page de connexion
-    window.location.href = "frontend.complaints.kidjamo.app/authentication/sign-in";
+    window.location.href = "/authentication/sign-in";
   } catch (error) {
     console.error("❌ Erreur logout:", error);
     // Force la déconnexion même en cas d'erreur
     localStorage.clear();
     window.dispatchEvent(new Event("userChanged"));
-    window.location.href = "frontend.complaints.kidjamo.app/authentication/sign-in";
+    window.location.href = "/authentication/sign-in";
   }
 };
 
