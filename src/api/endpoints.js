@@ -63,7 +63,7 @@ const getTenantDomain = () => {
  * URL publique (sans tenant)
  */
 export const getPublicBackendUrl = () => {
-  return "http://16.16.202.86:8000/api";
+  return "https://complaints.kidjamo.app:8000/api";
 };
 
 /**
@@ -76,7 +76,7 @@ export const getTenantBackendUrl = () => {
     return getPublicBackendUrl();
   }
 
-  return `http://${tenantDomain}:8000/api`;
+  return `https://${tenantDomain}:8000/api`;
 };
 
 /**
