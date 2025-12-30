@@ -5,7 +5,7 @@ import { logout } from "api/authService";
 
 export default function Logout() {
   useEffect(() => {
-    console.log("Déconnexion en cours...");
+    // DEV ONLY //  console.log("Déconnexion en cours...");
     logout(); // exécute immédiatement
   }, []);
 

@@ -78,7 +78,7 @@ function Basic() {
     try {
       //const userData = await login(email, password);
       const userData = await login(email, password);
-      console.log("Utilisateur connecté :", userData);
+      // DEV ONLY //  console.log("Utilisateur connecté :", userData);
 
       // Si redirection automatique n'a pas eu lieu (même tenant)
       if (userData.user.role === "SUPER_ADMIN") {

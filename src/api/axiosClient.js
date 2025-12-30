@@ -36,7 +36,7 @@ axiosClient.interceptors.request.use(
   (config) => {
     // ⛔ NE PAS ajouter de token sur les routes publiques
     if (isPublicRoute(config.url)) {
-      console.log("🟦 Route publique sans token:", config.url);
+      // DEV ONLY //  console.log("🟦 Route publique sans token:", config.url);
       return config;
     }
     // Récupérer le token depuis localStorage
@@ -44,18 +44,22 @@ axiosClient.interceptors.request.use(
 
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
-      console.log("'🔑 Token ajouté à la requête:'", config.url);
+      // DEV ONLY //  console.log("'🔑 Token ajouté à la requête:'", config.url);
     } else {
       console.warn("'⚠️ Aucun token trouvé pour la requête:'", config.url);
     }
 
     // Log de debug
+    {
+      /* DEV ONLY
     console.log("'📤 Requête:'", {
       method: config.method,
       url: config.url,
       //headers: config.headers,
       hasToken: !!token,
     });
+  */
+    }
 
     return config;
   },
@@ -68,7 +72,7 @@ axiosClient.interceptors.request.use(
 // Intercepteur de réponse : gérer les erreurs 401
 axiosClient.interceptors.response.use(
   (response) => {
-    console.log("'✅ Réponse reçue:'", response.status, response.config.url);
+    // DEV ONLY //  console.log("'✅ Réponse reçue:'", response.status, response.config.url);
     return response;
   },
   async (error) => {
@@ -81,7 +85,7 @@ axiosClient.interceptors.response.use(
     ) {
       originalRequest._retry = true;
 
-      console.log("'🔄 Token expiré, tentative de refresh...'");
+      // DEV ONLY //  console.log("'🔄 Token expiré, tentative de refresh...'");
 
       try {
         const refreshToken = localStorage.getItem("refresh_token");
@@ -101,7 +105,7 @@ axiosClient.interceptors.response.use(
 
         const newAccessToken = response.data.access;
         localStorage.setItem("access_token", newAccessToken);
-        console.log("'✅ Token refreshed'");
+        // DEV ONLY //  console.log("'✅ Token refreshed'");
         // Réessayer la requête originale avec le nouveau token
         originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
         return axiosClient(originalRequest);

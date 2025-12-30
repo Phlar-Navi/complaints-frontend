@@ -76,21 +76,21 @@ function AgentDashboard({ stats, user, onRefresh }) {
   const navigate = useNavigate();
 
   // ===== DÉBOGAGE DÉTAILLÉ =====
-  console.log("=== DÉBOGAGE AgentDashboard ===");
-  console.log("1. stats reçu:", stats);
-  console.log("2. Type de stats:", typeof stats);
-  console.log("3. stats est null?", stats === null);
-  console.log("4. stats est undefined?", stats === undefined);
-  console.log("5. stats?.stats:", stats?.stats);
-  console.log("6. stats?.stats?.overview:", stats?.stats?.overview);
+  // DEV ONLY //  console.log("=== DÉBOGAGE AgentDashboard ===");
+  // DEV ONLY //  console.log("1. stats reçu:", stats);
+  // DEV ONLY //  console.log("2. Type de stats:", typeof stats);
+  // DEV ONLY //  console.log("3. stats est null?", stats === null);
+  // DEV ONLY //  console.log("4. stats est undefined?", stats === undefined);
+  // DEV ONLY //  console.log("5. stats?.stats:", stats?.stats);
+  // DEV ONLY //  console.log("6. stats?.stats?.overview:", stats?.stats?.overview);
 
   // Extraire les stats réelles de l'objet parent
   const actualStats = stats?.stats || stats;
   const userData = localStorage.getItem("user") ? JSON.parse(localStorage.getItem("user")) : null;
 
-  console.log("7. actualStats:", actualStats);
-  console.log("8. actualStats?.overview:", actualStats?.overview);
-  console.log("================================");
+  // DEV ONLY //  console.log("7. actualStats:", actualStats);
+  // DEV ONLY //  console.log("8. actualStats?.overview:", actualStats?.overview);
+  // DEV ONLY //  console.log("================================");
 
   // Si stats est complètement absent
   if (!stats) {
