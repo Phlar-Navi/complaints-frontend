@@ -74,7 +74,7 @@ export default function App() {
 
   // Obtenir les routes dynamiquement en fonction du rôle actuel
   const routes = useMemo(() => {
-    console.log("🔄 Recalcul des routes - Key:", routesKey);
+    // DEV ONLY console.log("🔄 Recalcul des routes - Key:", routesKey);
     return getRoutesConfig();
   }, [routesKey]);
 
@@ -91,7 +91,7 @@ export default function App() {
   // Écouter les changements de l'utilisateur pour recalculer les routes
   useEffect(() => {
     const handleUserChange = () => {
-      console.log("👤 Changement utilisateur détecté, recalcul des routes");
+      // DEV ONLY console.log("👤 Changement utilisateur détecté, recalcul des routes");
       setRoutesKey((prev) => prev + 1);
     };
 

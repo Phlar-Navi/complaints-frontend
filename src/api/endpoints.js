@@ -55,7 +55,7 @@ const getTenantDomain = () => {
 
   const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
   const domain = `${normalizedSchema}.complaints.kidjamo.app`;
-  console.log("✅ Domaine tenant construit:", domain);
+  // DEV ONLY console.log("✅ Domaine tenant construit:", domain);
   return domain;
 };
 
@@ -86,17 +86,17 @@ export const getTenantBackendUrl = () => {
  */
 export const getApiUrl = () => {
   if (isSuperAdmin()) {
-    console.log("🔑 SUPER_ADMIN → URL publique");
+    // DEV ONLY console.log("🔑 SUPER_ADMIN → URL publique");
     return getPublicBackendUrl();
   }
 
   const tenant = getTenantFromStorage();
   if (tenant?.schema_name) {
-    console.log("👤 Utilisateur tenant → URL tenant");
+    // DEV ONLY console.log("👤 Utilisateur tenant → URL tenant");
     return getTenantBackendUrl();
   }
 
-  console.log("⚠️ Aucun contexte → URL publique");
+  // DEV ONLY console.log("⚠️ Aucun contexte → URL publique");
   return getPublicBackendUrl();
 };
 
@@ -112,7 +112,7 @@ const buildEndpoints = () => {
   const apiUrl = getApiUrl();
   const publicUrl = getPublicBackendUrl();
 
-  console.log("🏗️ Construction endpoints avec:", apiUrl);
+  // DEV ONLY console.log("🏗️ Construction endpoints avec:", apiUrl);
 
   return {
     // === ENDPOINTS PUBLICS (toujours domaine principal) ===
@@ -205,16 +205,16 @@ export const ENDPOINTS = new Proxy(
  * À appeler après login/logout
  */
 export const refreshEndpoints = () => {
-  console.log("🔄 Refresh endpoints");
+  // DEV ONLY console.log("🔄 Refresh endpoints");
   cachedEndpoints = buildEndpoints();
 
   // Log pour debug
   const user = getUserFromStorage();
   const tenant = getTenantFromStorage();
-  console.log("  User:", user?.email, "Role:", user?.role);
-  console.log("  Tenant:", tenant?.name, "Schema:", tenant?.schema_name);
-  console.log("  DASHBOARD:", cachedEndpoints.DASHBOARD);
-  console.log("  ME:", cachedEndpoints.ME);
+  // DEV ONLY console.log("  User:", user?.email, "Role:", user?.role);
+  // DEV ONLY console.log("  Tenant:", tenant?.name, "Schema:", tenant?.schema_name);
+  // DEV ONLY console.log("  DASHBOARD:", cachedEndpoints.DASHBOARD);
+  // DEV ONLY console.log("  ME:", cachedEndpoints.ME);
 
   return cachedEndpoints;
 };
@@ -224,15 +224,15 @@ if (config.IS_DEVELOPMENT) {
   const user = getUserFromStorage();
   const tenant = getTenantFromStorage();
 
-  console.log("🔧 API Endpoints - Configuration Initiale:");
-  console.log("  User:", user?.email || "(non connecté)");
-  console.log("  Role:", user?.role || "(aucun)");
-  console.log("  Tenant:", tenant?.name || "(aucun)");
-  console.log("  API URL:", getApiUrl());
-  console.log("  ---");
-  console.log("  LOGIN:", cachedEndpoints.LOGIN);
-  console.log("  DASHBOARD:", cachedEndpoints.DASHBOARD);
-  console.log("  ME:", cachedEndpoints.ME);
+  // DEV ONLY console.log("🔧 API Endpoints - Configuration Initiale:");
+  // DEV ONLY console.log("  User:", user?.email || "(non connecté)");
+  // DEV ONLY console.log("  Role:", user?.role || "(aucun)");
+  // DEV ONLY console.log("  Tenant:", tenant?.name || "(aucun)");
+  // DEV ONLY console.log("  API URL:", getApiUrl());
+  // DEV ONLY console.log("  ---");
+  // DEV ONLY console.log("  LOGIN:", cachedEndpoints.LOGIN);
+  // DEV ONLY console.log("  DASHBOARD:", cachedEndpoints.DASHBOARD);
+  // DEV ONLY console.log("  ME:", cachedEndpoints.ME);
 }
 
 // Exports

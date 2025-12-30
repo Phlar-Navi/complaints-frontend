@@ -14,14 +14,14 @@ const MAIN_API_URL = process.env.REACT_APP_MAIN_API_URL || "http://localhost:800
  */
 export const smartLogin = async (email, password) => {
   try {
-    console.log("'🔐 Smart login - Envoi vers:'", `${MAIN_API_URL}/auth/smart-login/`);
+    // DEV ONLY console.log("'🔐 Smart login - Envoi vers:'", `${MAIN_API_URL}/auth/smart-login/`);
 
     const response = await axios.post(`${MAIN_API_URL}/auth/smart-login/`, {
       email,
       password,
     });
 
-    console.log("'✅ Réponse reçue:'", response.data);
+    // DEV ONLY console.log("'✅ Réponse reçue:'", response.data);
 
     const { access, refresh, user, tenant, redirect_url, message } = response.data;
 

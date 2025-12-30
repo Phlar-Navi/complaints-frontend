@@ -65,8 +65,8 @@ const isOnTenantDomain = (tenantSchemaName) => {
  */
 export const login = async (email, password) => {
   try {
-    console.log("🔐 Login depuis:", window.location.hostname);
-    console.log("   Email:", email);
+    // DEV ONLY console.log("🔐 Login depuis:", window.location.hostname);
+    // DEV ONLY console.log("   Email:", email);
 
     // Appel API (ne pas nettoyer localStorage avant, on peut en avoir besoin)
     const response = await axiosClient.post(ENDPOINTS.LOGIN, {
@@ -75,12 +75,12 @@ export const login = async (email, password) => {
     });
 
     const { access, refresh, user, tenant } = response.data;
-    console.log("Réponse recue: ", response.data);
+    // DEV ONLY console.log("Réponse recue: ", response.data);
     localStorage.setItem("login_response", JSON.stringify(response.data));
 
     {
       /* DEV ONLY
-      console.log("✅ Login réussi:", {
+      // DEV ONLY console.log("✅ Login réussi:", {
         user: user.email,
         role: user.role,
         tenant: tenant?.name,
@@ -93,9 +93,9 @@ export const login = async (email, password) => {
     if (isOnPublicDomain() && tenant && tenant.schema_name) {
       const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
 
-      console.log("🔄 Redirection cross-domain détectée");
-      console.log("   De: localhost");
-      console.log("   Vers:", `${normalizedSchema}.localhost`);
+      // DEV ONLY console.log("🔄 Redirection cross-domain détectée");
+      // DEV ONLY console.log("   De: localhost");
+      // DEV ONLY console.log("   Vers:", `${normalizedSchema}.localhost`);
 
       // 🔧 SOLUTION : Passer les tokens et user dans l'URL (temporairement)
       const redirectUrl = buildTenantUrl(
@@ -111,7 +111,7 @@ export const login = async (email, password) => {
         }
       );
 
-      console.log("🔄 Redirection vers:", redirectUrl);
+      // DEV ONLY console.log("🔄 Redirection vers:", redirectUrl);
 
       // Redirection immédiate
       window.location.href = redirectUrl;
@@ -119,7 +119,7 @@ export const login = async (email, password) => {
     }
 
     // Sinon, on est déjà sur le bon domaine : stocker normalement
-    console.log("✓ Même domaine, stockage local");
+    // DEV ONLY console.log("✓ Même domaine, stockage local");
 
     // Nettoyer puis stocker
     localStorage.clear();
@@ -131,13 +131,13 @@ export const login = async (email, password) => {
       localStorage.setItem("tenant", JSON.stringify(tenant));
     }
 
-    console.log("💾 Tokens stockés localement");
+    // DEV ONLY console.log("💾 Tokens stockés localement");
 
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
-    console.log("🔔 Dispatch userChanged event");
+    // DEV ONLY console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
     if (user.role === "SUPER_ADMIN") {
-      console.log("🔑 SUPER_ADMIN → redirection dashboard public");
+      // DEV ONLY console.log("🔑 SUPER_ADMIN → redirection dashboard public");
       window.location.href = "/dashboard";
       return response.data;
     }
@@ -175,9 +175,9 @@ export const handleAuthCallback = () => {
     const user = JSON.parse(atob(userEncoded));
     const tenant = tenantEncoded ? JSON.parse(atob(tenantEncoded)) : null;
 
-    console.log("✅ Tokens reçus depuis URL");
-    console.log("   User:", user.email);
-    console.log("   Tenant:", tenant?.name);
+    // DEV ONLY console.log("✅ Tokens reçus depuis URL");
+    // DEV ONLY console.log("   User:", user.email);
+    // DEV ONLY console.log("   Tenant:", tenant?.name);
 
     // Nettoyer et stocker dans le localStorage du nouveau domaine
     localStorage.clear();
@@ -187,13 +187,13 @@ export const handleAuthCallback = () => {
 
     if (tenant) {
       localStorage.setItem("tenant", JSON.stringify(tenant));
-      console.log("   Tenant stocké:", tenant.name);
+      // DEV ONLY console.log("   Tenant stocké:", tenant.name);
     }
 
-    console.log("💾 Tokens stockés sur le nouveau domaine");
+    // DEV ONLY console.log("💾 Tokens stockés sur le nouveau domaine");
 
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
-    console.log("🔔 Dispatch userChanged event");
+    // DEV ONLY console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
 
     // Nettoyer l'URL (enlever les tokens visibles)
@@ -218,7 +218,7 @@ export const handleAuthCallback = () => {
 
 export const logout_works_only_once = async () => {
   try {
-    console.log("🚪 Déconnexion...");
+    // DEV ONLY console.log("🚪 Déconnexion...");
 
     try {
       await axiosClient.post(ENDPOINTS.LOGOUT);
@@ -228,7 +228,7 @@ export const logout_works_only_once = async () => {
 
     // Nettoyer le localStorage
     localStorage.clear();
-    console.log("💾 LocalStorage nettoyé");
+    // DEV ONLY console.log("💾 LocalStorage nettoyé");
 
     // 🔥 IMPORTANT : Rediriger vers le domaine PUBLIC (sans sous-domaine)
     const protocol = window.location.protocol;
@@ -251,7 +251,7 @@ export const logout_works_only_once = async () => {
 
 export const logout = async () => {
   try {
-    console.log("🚪 Déconnexion...");
+    // DEV ONLY console.log("🚪 Déconnexion...");
 
     // Appeler l'API de logout si nécessaire
     try {
@@ -266,7 +266,7 @@ export const logout = async () => {
     // DEV ONLY // ("💾 LocalStorage nettoyé");
 
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
-    console.log("🔔 Dispatch userChanged event");
+    // DEV ONLY console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
 
     // Rediriger vers la page de connexion
@@ -286,7 +286,7 @@ export const logout = async () => {
 export const login_old = async (email, password) => {
   try {
     // DEV ONLY // ("🔐 Login depuis:", window.location.hostname);
-    console.log("   Email:", email);
+    // DEV ONLY console.log("   Email:", email);
 
     // Appel API (ne pas nettoyer localStorage avant, on peut en avoir besoin)
     const response = await axiosClient.post(ENDPOINTS.LOGIN, {
@@ -295,12 +295,12 @@ export const login_old = async (email, password) => {
     });
 
     const { access, refresh, user, tenant } = response.data;
-    console.log("Réponse recue: ", response.data);
+    // DEV ONLY console.log("Réponse recue: ", response.data);
     localStorage.setItem("login_response", JSON.stringify(response.data));
 
     {
       /* DEV ONLY
-    console.log("✅ Login réussi:", {
+    // DEV ONLY console.log("✅ Login réussi:", {
       user: user.email,
       role: user.role,
       tenant: tenant?.name,
@@ -313,9 +313,9 @@ export const login_old = async (email, password) => {
     if (isOnPublicDomain() && tenant && tenant.schema_name) {
       const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
 
-      console.log("🔄 Redirection cross-domain détectée");
-      console.log("   De: localhost");
-      console.log("   Vers:", `${normalizedSchema}.localhost`);
+      // DEV ONLY console.log("🔄 Redirection cross-domain détectée");
+      // DEV ONLY console.log("   De: localhost");
+      // DEV ONLY console.log("   Vers:", `${normalizedSchema}.localhost`);
 
       // 🔧 SOLUTION : Passer les tokens et user dans l'URL (temporairement)
       const redirectUrl = buildTenantUrl(
@@ -331,7 +331,7 @@ export const login_old = async (email, password) => {
         }
       );
 
-      console.log("🔄 Redirection vers:", redirectUrl);
+      // DEV ONLY console.log("🔄 Redirection vers:", redirectUrl);
 
       window.dispatchEvent(new Event("userChanged"));
       // Redirection immédiate
@@ -341,7 +341,7 @@ export const login_old = async (email, password) => {
     }
 
     // Sinon, on est déjà sur le bon domaine : stocker normalement
-    console.log("✓ Même domaine, stockage local");
+    // DEV ONLY console.log("✓ Même domaine, stockage local");
 
     // Nettoyer puis stocker
     localStorage.clear();
@@ -353,7 +353,7 @@ export const login_old = async (email, password) => {
       localStorage.setItem("tenant", JSON.stringify(tenant));
     }
 
-    console.log("💾 Tokens stockés localement");
+    // DEV ONLY console.log("💾 Tokens stockés localement");
 
     return response.data;
   } catch (error) {
@@ -387,9 +387,9 @@ export const handleAuthCallback_old = () => {
     const user = JSON.parse(atob(userEncoded));
     const tenant = tenantEncoded ? JSON.parse(atob(tenantEncoded)) : null;
 
-    console.log("✅ Tokens reçus depuis URL");
-    console.log("   User:", user.email);
-    console.log("   Tenant:", tenant?.name);
+    // DEV ONLY console.log("✅ Tokens reçus depuis URL");
+    // DEV ONLY console.log("   User:", user.email);
+    // DEV ONLY console.log("   Tenant:", tenant?.name);
 
     // Nettoyer et stocker dans le localStorage du nouveau domaine
     localStorage.clear();
@@ -399,10 +399,10 @@ export const handleAuthCallback_old = () => {
 
     if (tenant) {
       localStorage.setItem("tenant", JSON.stringify(tenant));
-      console.log("   Tenant stocké:", tenant.name);
+      // DEV ONLY console.log("   Tenant stocké:", tenant.name);
     }
 
-    console.log("💾 Tokens stockés sur le nouveau domaine");
+    // DEV ONLY console.log("💾 Tokens stockés sur le nouveau domaine");
 
     // Nettoyer l'URL (enlever les tokens visibles)
     window.history.replaceState({}, document.title, redirectPath);
@@ -422,7 +422,7 @@ export const handleAuthCallback_old = () => {
  * Déconnexion
  */
 export const logout_old = () => {
-  console.log("'👋 Logout...'");
+  // DEV ONLY console.log("'👋 Logout...'");
   // Nettoyer complètement le localStorage
   localStorage.clear();
   const baseDomain = getBaseDomain();
@@ -435,7 +435,7 @@ export const logout_old = () => {
 
 export const logout_buggy = async () => {
   try {
-    console.log("👋 Logout...");
+    // DEV ONLY console.log("👋 Logout...");
   } catch (e) {
     console.error("Erreur lors de la déconnexion:", e);
   } finally {
