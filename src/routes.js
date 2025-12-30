@@ -23,7 +23,7 @@ const getRoutes = () => {
   const isTenantAdmin = userData?.role === "TENANT_ADMIN";
   const isSuperAdmin = userData?.role === "SUPER_ADMIN";
 
-  // DEV ONLY // console.log("🔄 Routes recalculées - Utilisateur:", userData?.email, "Rôle:", userData?.role);
+  console.log("🔄 Routes recalculées - Utilisateur:", userData?.email, "Rôle:", userData?.role);
 
   return [
     {

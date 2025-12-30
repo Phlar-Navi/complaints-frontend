@@ -34,7 +34,7 @@ export const useRoleDashboard = (options = {}) => {
         error: null,
         lastUpdate: new Date(),
       }));
-      // DEV ONLY //  console.log("STATE DANS LE HOOK: ", state);
+      console.log("STATE DANS LE HOOK: ", state);
     } catch (error) {
       console.error("Erreur lors du chargement du dashboard:", error);
       setState((prev) => ({
@@ -49,16 +49,16 @@ export const useRoleDashboard = (options = {}) => {
     const raw = localStorage.getItem("user");
     const user = raw ? JSON.parse(raw) : null;
 
-    // DEV ONLY //  console.log("UTILISATEUR CONNECTE RAW: ", raw);
-    // DEV ONLY //  console.log("UTILISATEUR CONNECTE OBJET: ", user);
-    // DEV ONLY //  console.log("UTILISATEUR CONNECTE ROLE: ", user?.role);
+    console.log("UTILISATEUR CONNECTE RAW: ", raw);
+    console.log("UTILISATEUR CONNECTE OBJET: ", user);
+    console.log("UTILISATEUR CONNECTE ROLE: ", user?.role);
 
     setState((prev) => ({
       ...prev,
       role: user?.role,
     }));
-    // DEV ONLY //  console.log("ROLE DANS LE HOOK: ", user?.role);
-    // DEV ONLY //  console.log("STATE DANS LE HOOK: ", state);
+    console.log("ROLE DANS LE HOOK: ", user?.role);
+    console.log("STATE DANS LE HOOK: ", state);
   }, []);
 
   useEffect(() => {

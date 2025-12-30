@@ -58,7 +58,7 @@ export const useDashboard = (options = {}) => {
   useEffect(() => {
     fetchData();
     const userData = localStorage.getItem("userData");
-    // DEV ONLY //  console.log("User Data: ", userData);
+    console.log("User Data: ", userData);
   }, [fetchData]);
 
   // Auto-refresh si activé

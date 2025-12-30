@@ -50,7 +50,7 @@ function Dashboard() {
   useEffect(() => {
     const userData = localStorage.getItem("user");
     if (userData) {
-      // DEV ONLY //  console.log("UTILISATEUR CONNECTE: ", userData);
+      console.log("UTILISATEUR CONNECTE: ", userData);
     }
   }, []);
 

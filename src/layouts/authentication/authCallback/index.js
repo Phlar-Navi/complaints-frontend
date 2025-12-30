@@ -20,7 +20,7 @@ import axiosClient from "api/axiosClient";
  */
 function AuthCallback() {
   useEffect(() => {
-    // DEV ONLY //  console.log("📥 AuthCallback: Récupération des tokens...");
+    console.log("📥 AuthCallback: Récupération des tokens...");
     handleAuthCallback();
   }, []);
 
