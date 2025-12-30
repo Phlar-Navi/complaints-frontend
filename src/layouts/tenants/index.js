@@ -7,6 +7,14 @@ import IconButton from "@mui/material/IconButton";
 import Chip from "@mui/material/Chip";
 import Switch from "@mui/material/Switch";
 import Tooltip from "@mui/material/Tooltip";
+import Dialog from "@mui/material/Dialog";
+import DialogTitle from "@mui/material/DialogTitle";
+import DialogContent from "@mui/material/DialogContent";
+import DialogActions from "@mui/material/DialogActions";
+import TextField from "@mui/material/TextField";
+import FormControlLabel from "@mui/material/FormControlLabel";
+import Checkbox from "@mui/material/Checkbox";
+import Alert from "@mui/material/Alert";
 
 import MDBox from "components/MDBox";
 import MDTypography from "components/MDTypography";
@@ -19,12 +27,32 @@ import DataTable from "examples/Tables/DataTable";
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { getTenants, toggleTenantActive, deleteTenant } from "api/tenantsService";
+import { getTenants, createTenant, toggleTenantActive, deleteTenant } from "api/tenantsService";
 
 function TenantsManagement() {
   const navigate = useNavigate();
   const [tenants, setTenants] = useState([]);
   const [loading, setLoading] = useState(true);
+
+  // État de la modale
+  const [openModal, setOpenModal] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [error, setError] = useState(null);
+
+  // État du formulaire
+  const [formData, setFormData] = useState({
+    name: "",
+    schema_name: "",
+    domain_subdomain: "", // Nouveau : juste le sous-domaine
+    zone: "",
+    contact_info: "",
+    is_premium: false,
+    admin_email: "",
+    admin_password: "",
+    admin_password_confirm: "",
+    admin_first_name: "",
+    admin_last_name: "",
+  });
 
   useEffect(() => {
     fetchTenants();
@@ -39,6 +67,119 @@ function TenantsManagement() {
       console.error("Erreur:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleOpenModal = () => {
+    setOpenModal(true);
+    setError(null);
+    setFormData({
+      name: "",
+      schema_name: "",
+      domain_subdomain: "",
+      zone: "",
+      contact_info: "",
+      is_premium: false,
+      admin_email: "",
+      admin_password: "",
+      admin_password_confirm: "",
+      admin_first_name: "",
+      admin_last_name: "",
+    });
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setError(null);
+  };
+
+  const handleInputChange = (e) => {
+    const { name, value, checked, type } = e.target;
+
+    if (type === "checkbox") {
+      setFormData((prev) => ({ ...prev, [name]: checked }));
+      return;
+    }
+
+    setFormData((prev) => ({ ...prev, [name]: value }));
+
+    // Auto-générer schema_name et domain_subdomain basés sur le nom
+    if (name === "name" && value) {
+      // Pour le schema_name : underscores (format PostgreSQL)
+      const schemaName = value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Retirer les accents
+        .replace(/[^a-z0-9]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+
+      // Pour le sous-domaine : tirets (format URL)
+      const subdomain = value
+        .toLowerCase()
+        .normalize("NFD")
+        .replace(/[\u0300-\u036f]/g, "") // Retirer les accents
+        .replace(/[^a-z0-9]/g, "-")
+        .replace(/-+/g, "-")
+        .replace(/^-|-$/g, "");
+
+      setFormData((prev) => ({
+        ...prev,
+        schema_name: schemaName,
+        domain_subdomain: subdomain,
+      }));
+    }
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError(null);
+
+    // Validation côté client
+    if (formData.admin_password !== formData.admin_password_confirm) {
+      setError("Les mots de passe ne correspondent pas");
+      return;
+    }
+
+    if (formData.admin_password.length < 8) {
+      setError("Le mot de passe doit contenir au moins 8 caractères");
+      return;
+    }
+
+    if (!formData.domain_subdomain) {
+      setError("Le sous-domaine est requis");
+      return;
+    }
+
+    try {
+      setCreating(true);
+
+      // Construire le domaine complet
+      const payload = {
+        ...formData,
+        domain_url: `${formData.domain_subdomain}.complaints.kidjamo.app`,
+      };
+
+      // Retirer le champ temporaire
+      delete payload.domain_subdomain;
+
+      await createTenant(payload);
+
+      // Fermer la modale et rafraîchir la liste
+      handleCloseModal();
+      fetchTenants();
+
+      alert(`Tenant créé avec succès !\nDomaine: ${payload.domain_url}`);
+    } catch (err) {
+      console.error("Erreur création tenant:", err);
+      setError(
+        err.response?.data?.message ||
+          err.response?.data?.detail ||
+          JSON.stringify(err.response?.data) ||
+          "Erreur lors de la création du tenant"
+      );
+    } finally {
+      setCreating(false);
     }
   };
 
@@ -108,22 +249,6 @@ function TenantsManagement() {
     ),
     actions: (
       <MDBox display="flex" gap={1}>
-        {/*
-          <Tooltip title="Voir détails">
-            <IconButton size="small" color="info" onClick={() => navigate(`/tenants/${tenant.id}`)}>
-              <Icon>visibility</Icon>
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="Modifier">
-            <IconButton
-              size="small"
-              color="warning"
-              onClick={() => navigate(`/tenants/${tenant.id}/edit`)}
-            >
-              <Icon>edit</Icon>
-            </IconButton>
-          </Tooltip>
-        */}
         <Tooltip title="Supprimer">
           <IconButton
             size="small"
@@ -162,7 +287,7 @@ function TenantsManagement() {
                     variant="contained"
                     color="white"
                     size="small"
-                    onClick={() => navigate("/tenants/create")}
+                    onClick={handleOpenModal}
                   >
                     <Icon sx={{ mr: 1 }}>add</Icon>
                     Nouveau Tenant
@@ -171,7 +296,6 @@ function TenantsManagement() {
               </MDBox>
 
               <MDBox p={3}>
-                {/* Stats rapides */}
                 <MDBox display="flex" gap={2} mb={3}>
                   <Chip label={`${tenants.length} tenants`} color="primary" />
                   <Chip
@@ -212,6 +336,205 @@ function TenantsManagement() {
           </Grid>
         </Grid>
       </MDBox>
+
+      {/* Modale de création */}
+      <Dialog open={openModal} onClose={handleCloseModal} maxWidth="md" fullWidth>
+        <DialogTitle>
+          <MDBox display="flex" alignItems="center" gap={1}>
+            <Icon color="info">apartment</Icon>
+            <MDTypography variant="h5">Créer un nouveau tenant</MDTypography>
+          </MDBox>
+        </DialogTitle>
+
+        <form onSubmit={handleSubmit}>
+          <DialogContent dividers>
+            {error && (
+              <Alert severity="error" sx={{ mb: 2 }}>
+                {error}
+              </Alert>
+            )}
+
+            <Grid container spacing={2}>
+              {/* Section Tenant */}
+              <Grid item xs={12}>
+                <MDTypography variant="h6" color="info" mb={1}>
+                  Informations du Tenant
+                </MDTypography>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Nom du tenant"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  placeholder="Ex: Commissariat Central"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Schema Name"
+                  name="schema_name"
+                  value={formData.schema_name}
+                  onChange={handleInputChange}
+                  placeholder="Ex: commissariat_central"
+                  helperText="Lettres minuscules, chiffres et underscores uniquement"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  label="Zone"
+                  name="zone"
+                  value={formData.zone}
+                  onChange={handleInputChange}
+                  placeholder="Ex: Douala, Yaoundé"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Sous-domaine"
+                  name="domain_subdomain"
+                  value={formData.domain_subdomain}
+                  onChange={handleInputChange}
+                  placeholder="Ex: commissariat-central"
+                  helperText="Sera accessible sur : [sous-domaine].complaints.kidjamo.app"
+                  InputProps={{
+                    endAdornment: (
+                      <MDTypography variant="caption" color="text">
+                        .complaints.kidjamo.app
+                      </MDTypography>
+                    ),
+                  }}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  multiline
+                  rows={2}
+                  label="Informations de contact"
+                  name="contact_info"
+                  value={formData.contact_info}
+                  onChange={handleInputChange}
+                  placeholder="Adresse, téléphone, etc."
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={formData.is_premium}
+                      onChange={handleInputChange}
+                      name="is_premium"
+                      color="warning"
+                    />
+                  }
+                  label="Compte Premium"
+                />
+              </Grid>
+
+              {/* Section Admin */}
+              <Grid item xs={12} mt={2}>
+                <MDTypography variant="h6" color="info" mb={1}>
+                  Administrateur du Tenant
+                </MDTypography>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Prénom"
+                  name="admin_first_name"
+                  value={formData.admin_first_name}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Nom"
+                  name="admin_last_name"
+                  value={formData.admin_last_name}
+                  onChange={handleInputChange}
+                />
+              </Grid>
+
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  type="email"
+                  label="Email"
+                  name="admin_email"
+                  value={formData.admin_email}
+                  onChange={handleInputChange}
+                  placeholder="admin@example.com"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="password"
+                  label="Mot de passe"
+                  name="admin_password"
+                  value={formData.admin_password}
+                  onChange={handleInputChange}
+                  helperText="Minimum 8 caractères"
+                />
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <TextField
+                  fullWidth
+                  required
+                  type="password"
+                  label="Confirmer le mot de passe"
+                  name="admin_password_confirm"
+                  value={formData.admin_password_confirm}
+                  onChange={handleInputChange}
+                  error={
+                    formData.admin_password_confirm &&
+                    formData.admin_password !== formData.admin_password_confirm
+                  }
+                  helperText={
+                    formData.admin_password_confirm &&
+                    formData.admin_password !== formData.admin_password_confirm
+                      ? "Les mots de passe ne correspondent pas"
+                      : ""
+                  }
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+
+          <DialogActions>
+            <MDButton onClick={handleCloseModal} color="secondary" disabled={creating}>
+              Annuler
+            </MDButton>
+            <MDButton type="submit" color="info" disabled={creating}>
+              {creating ? "Création..." : "Créer le tenant"}
+            </MDButton>
+          </DialogActions>
+        </form>
+      </Dialog>
+
       <Footer />
     </DashboardLayout>
   );
