@@ -1,7 +1,7 @@
 // =================================================================
 // TenantAdminDashboard.js - Vue complète du tenant
 // =================================================================
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Grid from "@mui/material/Grid";
 import Card from "@mui/material/Card";
 import Icon from "@mui/material/Icon";

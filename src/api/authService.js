@@ -132,7 +132,6 @@ export const login = async (email, password) => {
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
     console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
-    window.location.reload();
     return response.data;
   } catch (error) {
     console.error("❌ Erreur login:", error.response?.data || error.message);
