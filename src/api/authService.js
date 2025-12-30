@@ -205,7 +205,7 @@ export const handleAuthCallback = () => {
  */
 // src/api/authService.js
 
-export const logout = async () => {
+export const logout_works_only_once = async () => {
   try {
     console.log("🚪 Déconnexion...");
 
@@ -238,7 +238,7 @@ export const logout = async () => {
   }
 };
 
-export const logout_not_redirecting = async () => {
+export const logout = async () => {
   try {
     console.log("🚪 Déconnexion...");
 
@@ -258,20 +258,14 @@ export const logout_not_redirecting = async () => {
     console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
 
-    // 🔥 FORCER un vrai rechargement pour reconstruire axiosClient
-    setTimeout(() => {
-      console.log("Rechargement FORCE!");
-      window.location.reload();
-    }, 100);
-
     // Rediriger vers la page de connexion
-    window.location.href = "/authentication/sign-in";
+    window.location.href = "frontend.complaints.kidjamo.app/authentication/sign-in";
   } catch (error) {
     console.error("❌ Erreur logout:", error);
     // Force la déconnexion même en cas d'erreur
     localStorage.clear();
     window.dispatchEvent(new Event("userChanged"));
-    window.location.href = "/authentication/sign-in";
+    window.location.href = "frontend.complaints.kidjamo.app/authentication/sign-in";
   }
 };
 
