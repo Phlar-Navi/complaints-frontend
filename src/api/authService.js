@@ -65,7 +65,7 @@ const isOnTenantDomain = (tenantSchemaName) => {
  */
 // src/api/authService.js
 
-export const login = async (email, password) => {
+export const login_buggy = async (email, password) => {
   try {
     console.log("🔐 Login depuis:", window.location.hostname);
     console.log("   Email:", email);
@@ -144,7 +144,7 @@ export const login = async (email, password) => {
   }
 };
 
-export const login_flawfull = async (email, password) => {
+export const login = async (email, password) => {
   try {
     console.log("🔐 Login depuis:", window.location.hostname);
     console.log("   Email:", email);
