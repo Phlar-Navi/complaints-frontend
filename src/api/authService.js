@@ -63,87 +63,6 @@ const isOnTenantDomain = (tenantSchemaName) => {
 /**
  * Connexion utilisateur
  */
-// src/api/authService.js
-
-export const login_buggy = async (email, password) => {
-  try {
-    console.log("🔐 Login depuis:", window.location.hostname);
-    console.log("   Email:", email);
-
-    const response = await axiosClient.post(ENDPOINTS.LOGIN, {
-      email,
-      password,
-    });
-
-    const { access, refresh, user, tenant } = response.data;
-    console.log("✅ Login réussi:", {
-      user: user.email,
-      role: user.role,
-      tenant: tenant?.name,
-      tenantSchema: tenant?.schema_name,
-    });
-
-    // 🔥 CAS 1 : SUPER_ADMIN (pas de tenant, reste sur domaine public)
-    if (user.role === "SUPER_ADMIN" || !tenant) {
-      console.log("👑 Super Admin détecté, stockage sur domaine public");
-
-      localStorage.clear();
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-      localStorage.setItem("user", JSON.stringify(user));
-
-      window.dispatchEvent(new Event("userChanged"));
-
-      // Forcer le rechargement pour reconstruire les routes
-      window.location.href = "/dashboard";
-      return response.data;
-    }
-
-    // 🔥 CAS 2 : Utilisateur avec tenant
-    const normalizedSchema = tenant.schema_name.replace(/_/g, "-");
-    const currentHostname = window.location.hostname;
-    const expectedHostname = `${normalizedSchema}.complaints.kidjamo.app`;
-
-    // Si on est déjà sur le bon sous-domaine
-    if (currentHostname === expectedHostname) {
-      console.log("✓ Déjà sur le bon domaine tenant");
-
-      localStorage.clear();
-      localStorage.setItem("access_token", access);
-      localStorage.setItem("refresh_token", refresh);
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("tenant", JSON.stringify(tenant));
-
-      window.dispatchEvent(new Event("userChanged"));
-
-      // Forcer le rechargement
-      window.location.href = "/dashboard";
-      return response.data;
-    }
-
-    // Sinon, redirection cross-domain nécessaire
-    console.log("🔄 Redirection cross-domain");
-    console.log("   De:", currentHostname);
-    console.log("   Vers:", expectedHostname);
-
-    const redirectUrl = buildTenantUrl(normalizedSchema, "/auth-callback", {
-      token: btoa(access),
-      refresh: btoa(refresh),
-      user: btoa(JSON.stringify(user)),
-      tenant: btoa(JSON.stringify(tenant)),
-      redirect: "/dashboard",
-    });
-
-    console.log("🔄 Redirection vers:", redirectUrl);
-    window.location.href = redirectUrl;
-
-    return response.data;
-  } catch (error) {
-    console.error("❌ Erreur login:", error.response?.data || error.message);
-    throw error;
-  }
-};
-
 export const login = async (email, password) => {
   try {
     console.log("🔐 Login depuis:", window.location.hostname);
@@ -192,7 +111,6 @@ export const login = async (email, password) => {
 
       // Redirection immédiate
       window.location.href = redirectUrl;
-
       return response.data;
     }
 
@@ -214,7 +132,7 @@ export const login = async (email, password) => {
     // 🔥 NOUVEAU : Dispatcher l'événement pour recalculer les routes
     console.log("🔔 Dispatch userChanged event");
     window.dispatchEvent(new Event("userChanged"));
-
+    window.location.reload();
     return response.data;
   } catch (error) {
     console.error("❌ Erreur login:", error.response?.data || error.message);
